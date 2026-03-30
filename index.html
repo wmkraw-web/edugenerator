@@ -130,10 +130,35 @@
             const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 29 Marca 2026');
             const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
             
+            // Formatowanie Tekstu (Nowość)
+            const [textFormats, setTextFormats] = useState({
+                title: { size: 64, bold: true, italic: false, color: '#1e293b' },
+                subtitle: { size: 24, bold: true, italic: false, color: '#1e293b' },
+                name: { size: 60, bold: true, italic: false, color: '#1e293b' },
+                reason: { size: 22, bold: true, italic: false, color: '#1e293b' }
+            });
+
+            const updateFormat = (field, key, value) => {
+                setTextFormats(prev => ({ ...prev, [field]: { ...prev[field], [key]: value } }));
+            };
+
+            const TextFormatToolbar = ({ format, onChange, maxSize = 120 }) => (
+                <div className="flex items-center gap-2 mt-2 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+                    <button onClick={() => onChange('bold', !format.bold)} className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-serif transition-colors ${format.bold ? 'bg-indigo-100 text-indigo-700 shadow-inner' : 'hover:bg-gray-100 text-gray-600'}`}><b>B</b></button>
+                    <button onClick={() => onChange('italic', !format.italic)} className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-serif transition-colors ${format.italic ? 'bg-indigo-100 text-indigo-700 shadow-inner' : 'hover:bg-gray-100 text-gray-600'}`}><i>I</i></button>
+                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                    <input type="color" value={format.color} onChange={e => onChange('color', e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer border border-gray-200 p-0.5 shadow-sm" />
+                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                    <Icon name="Type" size={16} className="text-gray-400" />
+                    <input type="range" min="10" max={maxSize} value={format.size} onChange={e => onChange('size', Number(e.target.value))} className="flex-1 accent-indigo-600 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                    <span className="text-xs font-bold text-gray-500 w-8 text-right">{format.size}px</span>
+                </div>
+            );
+
             // Rozmiary i Slidery
-            const [titleSize, setTitleSize] = useState(64);
-            const [nameSize, setNameSize] = useState(60);
-            const [reasonSize, setReasonSize] = useState(22);
+            const [titleSize, setTitleSize] = useState(64); 
+            const [nameSize, setNameSize] = useState(60);   
+            const [reasonSize, setReasonSize] = useState(22); 
             const [boxWidth, setBoxWidth] = useState(85); 
             const [boxOpacity, setBoxOpacity] = useState(90); 
             const [boxOffset, setBoxOffset] = useState(0);
@@ -385,20 +410,28 @@
                             {/* Zawartość Zakładek */}
                             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex-1">
                                 {activeTab === 'diploma' && (
-                                    <div className="space-y-4">
+                                    <div className="space-y-6">
                                         <div>
                                             <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tytuł Dyplomu</label>
-                                            <input type="text" value={diplomaTitle} onChange={e => setDiplomaTitle(e.target.value)} className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-colors" />
+                                            <input type="text" value={diplomaTitle} onChange={e => setDiplomaTitle(e.target.value)} className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-colors font-bold text-center" />
+                                            <TextFormatToolbar format={textFormats.title} onChange={(k, v) => updateFormat('title', k, v)} maxSize={150} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Podtytuł</label>
+                                            <input type="text" value={diplomaSubtitle} onChange={e => setDiplomaSubtitle(e.target.value)} className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-colors text-center" />
+                                            <TextFormatToolbar format={textFormats.subtitle} onChange={(k, v) => updateFormat('subtitle', k, v)} maxSize={80} />
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-bold text-indigo-500 uppercase ml-1">Imię i Nazwisko</label>
-                                            <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)} className="w-full mt-1 p-3.5 bg-indigo-50/30 border-2 border-indigo-100 rounded-xl font-bold text-lg outline-none focus:border-indigo-500 transition-colors" />
+                                            <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)} className="w-full mt-1 p-3.5 bg-indigo-50/30 border-2 border-indigo-100 rounded-xl font-bold text-xl outline-none focus:border-indigo-500 transition-colors text-center" />
+                                            <TextFormatToolbar format={textFormats.name} onChange={(k, v) => updateFormat('name', k, v)} maxSize={120} />
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Za co?</label>
                                             <textarea value={diplomaReason} onChange={e => setDiplomaReason(e.target.value)} rows="3" className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm resize-none focus:border-indigo-400 focus:bg-white transition-colors" />
+                                            <TextFormatToolbar format={textFormats.reason} onChange={(k, v) => updateFormat('reason', k, v)} maxSize={60} />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3 pt-2">
+                                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
                                             <div>
                                                 <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Miejscowość i Data</label>
                                                 <input type="text" value={diplomaDate} onChange={e => setDiplomaDate(e.target.value)} className="w-full mt-1 p-2.5 border border-gray-200 rounded-lg text-xs outline-none bg-gray-50" />
@@ -462,11 +495,11 @@
                                     <div className="space-y-5 max-h-[450px] overflow-y-auto pr-3 custom-scrollbar">
                                         
                                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-3 block tracking-widest text-center">Kolory Czcionek</label>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-3 block tracking-widest text-center">Kolory Czcionek (Dodatki)</label>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="flex flex-col items-center">
                                                     <input type="color" value={diplomaTextColor} onChange={e => setDiplomaTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
-                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase">Dyplom</span>
+                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase text-center leading-tight">Data / Stopka</span>
                                                 </div>
                                                 <div className="flex flex-col items-center">
                                                     <input type="color" value={garlandTextColor} onChange={e => setGarlandTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
@@ -556,8 +589,18 @@
 
                                     {/* Nagłówek Dyplomu */}
                                     <div className="z-20 relative pt-2 flex-shrink-0 space-y-2">
-                                        <h1 style={{ fontSize: `${titleSize}px`, color: diplomaTextColor }} className="font-black tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full">{diplomaTitle}</h1>
-                                        <h3 className="text-xl md:text-2xl font-bold opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full" style={{ color: diplomaTextColor }}>{diplomaSubtitle}</h3>
+                                        <h1 style={{ 
+                                            fontSize: `${textFormats.title.size}px`, 
+                                            color: textFormats.title.color,
+                                            fontWeight: textFormats.title.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.title.italic ? 'italic' : 'normal'
+                                        }} className="tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full">{diplomaTitle}</h1>
+                                        <h3 style={{ 
+                                            fontSize: `${textFormats.subtitle.size}px`, 
+                                            color: textFormats.subtitle.color,
+                                            fontWeight: textFormats.subtitle.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal'
+                                        }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full">{diplomaSubtitle}</h3>
                                     </div>
 
                                     {/* Szyba (Glassmorphism) - Elastyczna struktura zapobiegająca wychodzeniu tekstu */}
@@ -572,8 +615,18 @@
                                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
                                         }}
                                     >
-                                        <h2 style={{ fontSize: `${nameSize}px`, color: diplomaTextColor }} className="font-black border-b-2 border-gray-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
-                                        <p style={{ fontSize: `${reasonSize}px`, color: diplomaTextColor }} className="font-bold leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
+                                        <h2 style={{ 
+                                            fontSize: `${textFormats.name.size}px`, 
+                                            color: textFormats.name.color,
+                                            fontWeight: textFormats.name.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.name.italic ? 'italic' : 'normal'
+                                        }} className="border-b-2 border-gray-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
+                                        <p style={{ 
+                                            fontSize: `${textFormats.reason.size}px`, 
+                                            color: textFormats.reason.color,
+                                            fontWeight: textFormats.reason.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.reason.italic ? 'italic' : 'normal'
+                                        }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
                                     </div>
 
                                     {/* Stopka Dyplomu */}
