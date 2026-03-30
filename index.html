@@ -87,6 +87,35 @@
           { id: 'lato', name: 'Powitanie Lata', bg: 'bg-yellow-50', borderHex: '#facc15', elements: ['☀️', '🏖️'] }
         ];
 
+        // Funkcja usuwająca białe tło z wygenerowanego obrazka
+        const makeWhiteTransparent = (imageSrc) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        // Jeśli piksel jest prawie biały
+                        if (data[i] > 240 && data[i+1] > 240 && data[i+2] > 240) {
+                            data[i+3] = 0; // Przezroczystość
+                        } else if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
+                            data[i+3] = 100; // Miękkie krawędzie
+                        }
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = () => resolve(imageSrc);
+                img.src = imageSrc;
+            });
+        };
+
         function App() {
             const [activeTab, setActiveTab] = useState('diploma');
             const [previewMode, setPreviewMode] = useState('diploma');
@@ -172,8 +201,15 @@
                     
                     // Weryfikacja czy obrazek został poprawnie wygenerowany i pobrany
                     const img = new Image();
-                    img.onload = () => {
-                        setCustomImage(imageUrl);
+                    img.crossOrigin = "Anonymous"; // Ważne dla Canvas API
+                    img.onload = async () => {
+                        // Jeśli tryb to nie "Pełne Tło", usuń białe tło z obrazka
+                        if (graphicLayout === 'full_background') {
+                            setCustomImage(imageUrl);
+                        } else {
+                            const transparentImg = await makeWhiteTransparent(imageUrl);
+                            setCustomImage(transparentImg);
+                        }
                         setIsGenerating(false);
                     };
                     img.onerror = () => {
@@ -497,7 +533,6 @@
                                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
                                         }}
                                     >
-                                        <div className="text-[12px] font-bold uppercase tracking-widest opacity-50 mb-2 md:mb-4">Przyznany dla:</div>
                                         <h2 style={{ fontSize: `${nameSize}px`, color: diplomaTextColor }} className="font-black border-b-2 border-gray-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
                                         <p style={{ fontSize: `${reasonSize}px`, color: diplomaTextColor }} className="font-bold leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
                                     </div>
@@ -515,7 +550,7 @@
                                         </div>
                                         
                                         <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
-                                            <div className="font-signature font-bold text-3xl mb-1 opacity-90" style={{ color: diplomaTextColor }}>{diplomaSignature}</div>
+                                            <div className="font-signature font-bold text-lg mb-1 opacity-90" style={{ color: diplomaTextColor }}>{diplomaSignature}</div>
                                             <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Podpis Nauczyciela</div>
                                         </div>
                                     </div>
