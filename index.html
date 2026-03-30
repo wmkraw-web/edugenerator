@@ -130,7 +130,7 @@
             const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 29 Marca 2026');
             const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
             
-            // Formatowanie Tekstu (Nowość)
+            // Formatowanie Tekstu 
             const [textFormats, setTextFormats] = useState({
                 title: { size: 64, bold: true, italic: false, color: '#1e293b' },
                 subtitle: { size: 24, bold: true, italic: false, color: '#1e293b' },
@@ -156,9 +156,6 @@
             );
 
             // Rozmiary i Slidery
-            const [titleSize, setTitleSize] = useState(64); 
-            const [nameSize, setNameSize] = useState(60);   
-            const [reasonSize, setReasonSize] = useState(22); 
             const [boxWidth, setBoxWidth] = useState(85); 
             const [boxOpacity, setBoxOpacity] = useState(90); 
             const [boxOffset, setBoxOffset] = useState(0);
@@ -400,15 +397,57 @@
                             </div>
 
                             {/* Zakładki */}
-                            <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1">
-                                <button onClick={() => {setActiveTab('diploma'); setPreviewMode('diploma');}} className={`flex-1 py-3.5 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'diploma' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Award" size={20} className="mb-1.5"/>Dyplom</button>
-                                <button onClick={() => {setActiveTab('garland'); setPreviewMode('garland');}} className={`flex-1 py-3.5 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'garland' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Type" size={20} className="mb-1.5"/>Girlanda</button>
-                                <button onClick={() => setActiveTab('themes')} className={`flex-1 py-3.5 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'themes' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Palette" size={20} className="mb-1.5"/>Motywy</button>
-                                <button onClick={() => setActiveTab('sliders')} className={`flex-1 py-3.5 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'sliders' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Sliders" size={20} className="mb-1.5"/>Szlify</button>
+                            <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1 flex-wrap sm:flex-nowrap">
+                                <button onClick={() => {setActiveTab('diploma'); setPreviewMode('diploma');}} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'diploma' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Award" size={18} className="mb-1.5"/>Dyplom</button>
+                                <button onClick={() => {setActiveTab('garland'); setPreviewMode('garland');}} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'garland' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Type" size={18} className="mb-1.5"/>Girlanda</button>
+                                <button onClick={() => setActiveTab('ai')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'ai' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Wand2" size={18} className="mb-1.5 text-purple-500"/>Grafika AI</button>
+                                <button onClick={() => setActiveTab('themes')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'themes' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Palette" size={18} className="mb-1.5"/>Motywy</button>
+                                <button onClick={() => setActiveTab('sliders')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'sliders' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Sliders" size={18} className="mb-1.5"/>Szlify</button>
                             </div>
 
                             {/* Zawartość Zakładek */}
                             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex-1">
+                                
+                                {activeTab === 'ai' && (
+                                    <div className="space-y-5">
+                                        <div className="bg-gradient-to-br from-indigo-50 to-white p-5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-3 opacity-10"><Icon name="Wand2" size={40}/></div>
+                                            
+                                            {!isPremium ? (
+                                              <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 text-center space-y-3 relative z-10">
+                                                <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center text-indigo-400 mb-2 shadow-sm">
+                                                    <Icon name="Lock" size={24} />
+                                                </div>
+                                                <h3 className="font-bold text-indigo-900 text-sm">Funkcja Premium (Moduł AI)</h3>
+                                                <p className="text-xs text-indigo-700">Wpisz kod Premium na górnym pasku, aby odblokować darmowy generator grafik AI. Otrzymasz go wspierając moją pracę wirtualną kawą!</p>
+                                              </div>
+                                            ) : (
+                                              <div className="relative z-10 space-y-4">
+                                                <label className="text-[11px] font-black text-indigo-800 block uppercase tracking-widest">Magiczny Kreator Obrazków</label>
+                                                <div className="flex flex-col space-y-3">
+                                                    <textarea 
+                                                        value={aiPrompt} 
+                                                        onChange={e => setAiPrompt(e.target.value)} 
+                                                        placeholder="Opisz co ma być na obrazku (np. uśmiechnięta sowa w okularach, pszczoła na kwiatku)..." 
+                                                        className="w-full p-4 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white resize-none"
+                                                        rows="3"
+                                                    />
+                                                    <button onClick={handleGenerateAiImage} disabled={isGenerating} className="w-full bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center justify-center space-x-2">
+                                                        {isGenerating ? <span>Trwa rzucanie czarów...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
+                                                    </button>
+                                                </div>
+                                                {customImage && (
+                                                    <button onClick={() => setCustomImage(null)} className="w-full mt-2 text-xs font-bold text-red-500 hover:text-red-700 py-2.5 border border-red-100 rounded-xl hover:bg-red-50 transition-colors">
+                                                        Usuń wygenerowaną grafikę i wróć do motywów
+                                                    </button>
+                                                )}
+                                              </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-400 text-center font-medium leading-relaxed">System AI automatycznie usunie tło i dopasuje obrazek do wybranego "Stylu Grafiki" z panelu Podstawowego wyżej.</p>
+                                    </div>
+                                )}
+
                                 {activeTab === 'diploma' && (
                                     <div className="space-y-6">
                                         <div>
@@ -431,7 +470,7 @@
                                             <textarea value={diplomaReason} onChange={e => setDiplomaReason(e.target.value)} rows="3" className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm resize-none focus:border-indigo-400 focus:bg-white transition-colors" />
                                             <TextFormatToolbar format={textFormats.reason} onChange={(k, v) => updateFormat('reason', k, v)} maxSize={60} />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+                                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 mt-4">
                                             <div>
                                                 <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Miejscowość i Data</label>
                                                 <input type="text" value={diplomaDate} onChange={e => setDiplomaDate(e.target.value)} className="w-full mt-1 p-2.5 border border-gray-200 rounded-lg text-xs outline-none bg-gray-50" />
@@ -454,33 +493,9 @@
                                 )}
                                 {activeTab === 'themes' && (
                                     <div className="space-y-5">
-                                        <div className="bg-gradient-to-br from-indigo-50 to-white p-5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-3 opacity-10"><Icon name="Wand2" size={40}/></div>
-                                            
-                                            {!isPremium ? (
-                                              <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 text-center space-y-3 relative z-10">
-                                                <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center text-indigo-400 mb-2 shadow-sm">
-                                                    <Icon name="Lock" size={24} />
-                                                </div>
-                                                <h3 className="font-bold text-indigo-900 text-sm">Funkcja Premium (Moduł AI)</h3>
-                                                <p className="text-xs text-indigo-700">Wpisz kod Premium na górnym pasku, aby odblokować darmowy generator grafik AI. Otrzymasz go wspierając moją pracę wirtualną kawą!</p>
-                                              </div>
-                                            ) : (
-                                              <div className="relative z-10">
-                                                <label className="text-[11px] font-black text-indigo-800 block mb-3 uppercase tracking-widest">Kreator Obrazków AI (Premium Aktywne)</label>
-                                                <div className="flex space-x-2">
-                                                    <input type="text" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="Opisz obrazek (np. wesoły miś z balonem)" className="flex-1 p-3 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white" />
-                                                    <button onClick={handleGenerateAiImage} disabled={isGenerating} className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center">
-                                                        {isGenerating ? 'Trwa czary...' : 'Rysuj'}
-                                                    </button>
-                                                </div>
-                                              </div>
-                                            )}
-                                        </div>
-
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Gotowe Motywy Kolorystyczne</label>
-                                            <div className="grid grid-cols-3 gap-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Wybierz Gotowy Motyw Kolorystyczny</label>
+                                            <div className="grid grid-cols-3 gap-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                                                 {THEMES.map(t => (
                                                     <button key={t.id} onClick={() => {setSelectedThemeId(t.id); setCustomImage(null);}} className={`p-3 rounded-xl border-2 flex flex-col items-center transition-all duration-200 ${selectedThemeId === t.id ? 'border-indigo-500 bg-indigo-50 shadow-sm scale-[1.02]' : 'border-gray-100 hover:border-indigo-200 hover:bg-gray-50'}`}>
                                                         <span className="text-2xl mb-1">{t.elements[0]}</span>
@@ -595,6 +610,7 @@
                                             fontWeight: textFormats.title.bold ? 'bold' : 'normal',
                                             fontStyle: textFormats.title.italic ? 'italic' : 'normal'
                                         }} className="tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full">{diplomaTitle}</h1>
+                                        
                                         <h3 style={{ 
                                             fontSize: `${textFormats.subtitle.size}px`, 
                                             color: textFormats.subtitle.color,
@@ -621,6 +637,7 @@
                                             fontWeight: textFormats.name.bold ? 'bold' : 'normal',
                                             fontStyle: textFormats.name.italic ? 'italic' : 'normal'
                                         }} className="border-b-2 border-gray-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
+                                        
                                         <p style={{ 
                                             fontSize: `${textFormats.reason.size}px`, 
                                             color: textFormats.reason.color,
