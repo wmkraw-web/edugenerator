@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EduGenerator - Dyplomy i Girlandy</title>
-    <!-- Biblioteki -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -61,7 +60,8 @@
                 Sliders: (<><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="18" y1="16" x2="22" y2="16"/></>),
                 Key: <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3y-3.5L15.5 7.5z"/>,
                 Settings: <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>,
-                Lock: (<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>)
+                Lock: (<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>),
+                HelpCircle: (<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>)
             };
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -121,13 +121,14 @@
             const [previewMode, setPreviewMode] = useState('diploma');
             const [isPremium, setIsPremium] = useState(false);
             const [accessCode, setAccessCode] = useState('');
+            const [showInstructions, setShowInstructions] = useState(false);
             
             // Dane Dyplomu
             const [diplomaTitle, setDiplomaTitle] = useState('DYPLOM');
             const [diplomaSubtitle, setDiplomaSubtitle] = useState('ZA WYBITNE OSIĄGNIĘCIA');
             const [studentName, setStudentName] = useState('Jan Kowalski');
             const [diplomaReason, setDiplomaReason] = useState('za udział w konkursie plastycznym "Wiosna w przedszkolu" i przygotowanie najpiękniejszej pracy.');
-            const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 29 Marca 2026');
+            const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 31 Marca 2026');
             const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
             
             // Formatowanie Tekstu 
@@ -155,7 +156,7 @@
                 </div>
             );
 
-            // Rozmiary i Slidery
+            // Rozmiary i Slidery Ogólne
             const [boxWidth, setBoxWidth] = useState(85); 
             const [boxOpacity, setBoxOpacity] = useState(90); 
             const [boxOffset, setBoxOffset] = useState(0);
@@ -308,6 +309,9 @@
                             <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span></span>
                         </div>
                         <div className="flex items-center space-x-4">
+                            <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
+                                <Icon name="HelpCircle" size={20} /> <span className="hidden sm:inline">Jak używać?</span>
+                            </button>
                             {!isPremium && (
                                 <div className="flex items-center space-x-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
                                     <input value={accessCode} onChange={e => setAccessCode(e.target.value)} placeholder="Kod dostępu..." className="p-2 bg-transparent text-sm w-32 outline-none font-medium text-gray-700"/>
@@ -676,6 +680,65 @@
                             )}
                         </div>
                     </div>
+
+                    {/* MODAL Z INSTRUKCJĄ OBSŁUGI */}
+                    {showInstructions && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print-hidden">
+                            <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col font-sans">
+                                <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+                                    <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><Icon name="HelpCircle" className="text-indigo-600"/> Instrukcja Obsługi</h2>
+                                    <button onClick={() => setShowInstructions(false)} className="p-2 hover:bg-slate-200 rounded-xl transition-colors text-slate-500 hover:text-slate-800 font-bold text-lg">✕</button>
+                                </div>
+                                
+                                <div className="p-6 md:p-8 overflow-y-auto space-y-6 text-sm text-slate-600 custom-scrollbar bg-white">
+                                    <p className="text-base font-medium">Witaj w <strong>EduGeneratorze!</strong> To narzędzie stworzone po to, aby błyskawicznie tworzyć przepiękne, spersonalizowane dyplomy i girlandy na każdą szkolną lub przedszkolną okazję.</p>
+                                    
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 1: Podstawa (Wybór stylu)</h3>
+                                        <p>Zacznij od lewego panelu bocznego, w sekcji <strong>Podstawa</strong>. Zdecyduj dla kogo tworzysz (np. Żłobek, Przedszkole), wybierz styl grafiki, określ gdzie na stronie mają być obrazki oraz dobierz ulubioną czcionkę.</p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 2: Wprowadzanie Tekstu</h3>
+                                        <ul className="list-disc pl-5 space-y-2">
+                                            <li>Wybierz zakładkę <strong>Dyplom</strong> lub <strong>Girlanda</strong>.</li>
+                                            <li><strong>Dyplom:</strong> Wypełnij tytuł, imię ucznia i powód nagrody. <br/>✨ <em>Pod każdym polem znajdziesz pasek formatowania! Możesz tam pogrubić tekst, zmienić rozmiar i kolor.</em></li>
+                                            <li><strong>Girlanda:</strong> Wpisz słowo, które chcesz wydrukować. System wygeneruje jedną literę na każdej stronie A4.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 3: Wybór Grafiki</h3>
+                                        <ul className="list-disc pl-5 space-y-2">
+                                            <li><strong>Błyskawicznie:</strong> Zakładka <em>Motywy</em> – kliknij w gotowy motyw (np. Kosmos, Wiosna), a system sam dobierze odpowiednie kolory i tła.</li>
+                                            <li><strong>Grafika AI (Premium):</strong> Zakładka <em>Grafika AI</em> – wpisz co chcesz zobaczyć (np. "uśmiechnięty kot"). Magia AI wygeneruje obrazek i usunie mu tło! <em>(Wymaga kodu dostępu)</em>.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 4: Szlify</h3>
+                                        <p>W zakładce <strong>Szlify</strong> znajdziesz zaawansowane opcje. Możesz zmienić styl ramek, kolory girlandy oraz dostosować "Szybę Dyplomu" (rozmyte tło pod tekstem), tak aby tekst był idealnie czytelny.</p>
+                                    </div>
+
+                                    <div className="space-y-3 bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
+                                        <h3 className="font-black text-indigo-900 text-lg flex items-center gap-2"><Icon name="Printer" size={20}/> Krok 5: Druk lub zapis do PDF</h3>
+                                        <p className="text-indigo-800">Gdy projekt po prawej stronie wygląda świetnie, zjedź na dół lewego panelu i kliknij <strong>WYDRUKUJ PROJEKT</strong>.</p>
+                                        <ul className="list-disc pl-5 text-indigo-700 font-medium space-y-1">
+                                            <li>Aby wydrukować: Wybierz swoją drukarkę.</li>
+                                            <li>Aby zapisać na dysku: W oknie drukowania wybierz opcję <strong>"Zapisz jako PDF"</strong>.</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="text-center pt-2">
+                                        <button onClick={() => setShowInstructions(false)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 transition-all active:scale-95 text-base tracking-wide w-full sm:w-auto">
+                                            Zrozumiałem, do dzieła!
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             );
         }
