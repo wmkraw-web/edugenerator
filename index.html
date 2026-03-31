@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EduGenerator - Dyplomy i Girlandy</title>
+    <!-- Biblioteki -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -228,10 +229,11 @@
                 const fullPrompt = `${aiPrompt} - ${ageModifier}, ${styleModifier}`;
                 
                 try {
-                    // DARMOWE API POLLINATIONS
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                    
+                    // NOWOŚĆ: dodane &model=flux dla ekstremalnej prędkości generowania!
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
                     
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -245,7 +247,7 @@
                         setIsGenerating(false);
                     };
                     img.onerror = () => {
-                        alert("Wystąpił problem z wygenerowaniem obrazka. Spróbuj zmodyfikować opis.");
+                        alert("Wystąpił problem z wygenerowaniem obrazka. Serwer AI może być obciążony, spróbuj ponownie.");
                         setIsGenerating(false);
                     };
                     img.src = imageUrl;
@@ -437,7 +439,7 @@
                                                         rows="3"
                                                     />
                                                     <button onClick={handleGenerateAiImage} disabled={isGenerating} className="w-full bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center justify-center space-x-2">
-                                                        {isGenerating ? <span>Trwa rzucanie czarów...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
+                                                        {isGenerating ? <span>Trwa rzucanie czarów (Tryb Turbo)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
                                                     </button>
                                                 </div>
                                                 {customImage && (
@@ -650,15 +652,11 @@
                                         }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
                                     </div>
 
-                                    {/* Stopka Dyplomu */}
-                                    <div className="z-20 relative flex justify-between items-end px-4 md:px-12 pb-2 flex-shrink-0 w-full select-none">
+                                    {/* Stopka Dyplomu - Usunięto okrągłą pieczęć */}
+                                    <div className="z-20 relative flex justify-between items-end px-4 md:px-16 pb-2 flex-shrink-0 w-full select-none">
                                         <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
                                             <div className="font-bold text-lg mb-1" style={{ color: diplomaTextColor }}>{diplomaDate}</div>
                                             <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Miejscowość i data</div>
-                                        </div>
-                                        
-                                        <div className="w-28 h-28 rounded-full border-4 border-red-500/40 flex items-center justify-center rotate-[-15deg] font-black text-[11px] p-2 bg-white/60 shadow-inner text-center z-30" style={{ color: '#ef4444', lineHeight: '1.2' }}>
-                                            <span className="drop-shadow-sm">PIECZĘĆ<br/>PLACÓWKI</span>
                                         </div>
                                         
                                         <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
