@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
     <title>EduGenerator - Dyplomy i Girlandy</title>
-    <!-- Biblioteki -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -50,7 +49,6 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- IKONY SVG ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 Printer: <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>,
@@ -90,7 +88,6 @@
           { id: 'lato', name: 'Powitanie Lata', bg: 'bg-yellow-50', borderHex: '#facc15', elements: ['☀️', '🏖️'] }
         ];
 
-        // --- FUNKCJA PRZEZROCZYSTEGO TŁA ---
         const makeWhiteTransparent = (imageSrc) => {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -132,7 +129,6 @@
             const [accessCode, setAccessCode] = useState('');
             const [showInstructions, setShowInstructions] = useState(false);
             
-            // Dane Dyplomu
             const [diplomaTitle, setDiplomaTitle] = useState('DYPLOM');
             const [diplomaSubtitle, setDiplomaSubtitle] = useState('ZA WYBITNE OSIĄGNIĘCIA');
             const [studentName, setStudentName] = useState('Jan Kowalski');
@@ -140,7 +136,6 @@
             const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 31 Marca 2026');
             const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
             
-            // Formatowanie Tekstu 
             const [textFormats, setTextFormats] = useState({
                 title: { size: 64, bold: true, italic: false, color: '#1e293b' },
                 subtitle: { size: 24, bold: true, italic: false, color: '#1e293b' },
@@ -165,7 +160,6 @@
                 </div>
             );
 
-            // Rozmiary i Slidery
             const [boxWidth, setBoxWidth] = useState(85); 
             const [boxOpacity, setBoxOpacity] = useState(90); 
             const [boxOffset, setBoxOffset] = useState(0);
@@ -173,7 +167,6 @@
             const [garlandLetterOffset, setGarlandLetterOffset] = useState(50); 
             const [garlandText, setGarlandText] = useState('WITAJCIE');
 
-            // Wygląd i Kolory
             const [diplomaTextColor, setDiplomaTextColor] = useState('#1e293b');
             const [garlandTextColor, setGarlandTextColor] = useState('#6366f1');
             const [borderStyle, setBorderStyle] = useState('solid'); 
@@ -183,9 +176,7 @@
             const [artStyle, setArtStyle] = useState('watercolor'); 
             const [graphicLayout, setGraphicLayout] = useState('bottom_corners'); 
             const [diplomaOrientation, setDiplomaOrientation] = useState('horizontal');
-            const [ageGroup, setAgeGroup] = useState('przedszkole');
 
-            // AI i Obrazy
             const [aiPrompt, setAiPrompt] = useState('');
             const [customImage, setCustomImage] = useState(null);
             const [isGenerating, setIsGenerating] = useState(false);
@@ -210,33 +201,26 @@
                 setIsTakingLong(false);
                 setAiError(null);
                 
-                let styleModifier = "";
-                let layoutModifier = graphicLayout === 'full_background' ? "full frame background scene, edge-to-edge illustration, no white background, fully filled canvas" : "single distinct object, isolated on pure white background, no scattered elements";
-                
+                // WERSJA 2.3: "ODCHUDZONE" MODYFIKATORY
+                // Zamiast wielkiego wypracowania, dodajemy tylko 2-3 kluczowe słowa po angielsku
+                let styleStr = "";
                 switch(artStyle) {
-                  case 'watercolor': styleModifier = `beautiful watercolor art, soft pastel colors, painted artistic style, aesthetic, ${layoutModifier}`; break;
-                  case 'boho': styleModifier = `trendy boho style art, earthy muted pastel colors, minimalist decor, aesthetic shapes, ${layoutModifier}`; break;
-                  case 'doodle': styleModifier = `hand drawn doodle sketch, colored pencil style, book illustration, cozy, ${layoutModifier}`; break;
-                  case 'papercraft': styleModifier = `3d papercraft illustration, layered paper cutout style, soft shadows, ${layoutModifier}`; break;
-                  case 'vibrant': styleModifier = `vibrant bold colors, high contrast, vivid, colorful cartoon illustration, energetic, ${layoutModifier}`; break;
-                  case 'pastel': styleModifier = `soft pastel aesthetic, dreamy colors, gentle lighting, cute pinterest style, ${layoutModifier}`; break;
-                  case 'realistic': styleModifier = `highly detailed, highly realistic, photography style, 8k resolution, cinematic lighting, ${layoutModifier}`; break;
-                  case '3d': styleModifier = `cute 3d render, claymation style, soft lighting, smooth 3d illustration, ${layoutModifier}`; break;
-                  case 'comic': styleModifier = `comic book style, cel shaded, pop art, vibrant flat colors with black outlines, ${layoutModifier}`; break;
-                  default: styleModifier = `flat vector illustration, ${layoutModifier}`;
+                  case 'watercolor': styleStr = "watercolor illustration"; break;
+                  case 'boho': styleStr = "boho aesthetic illustration"; break;
+                  case 'doodle': styleStr = "simple cute doodle"; break;
+                  case 'papercraft': styleStr = "3d papercraft art"; break;
+                  case 'vibrant': styleStr = "vibrant colorful cartoon"; break;
+                  case 'pastel': styleStr = "soft pastel drawing"; break;
+                  case 'realistic': styleStr = "detailed realistic photo"; break;
+                  case '3d': styleStr = "cute 3d clay render"; break;
+                  case 'comic': styleStr = "comic book style"; break;
+                  default: styleStr = "illustration";
                 }
 
-                let ageModifier = "";
-                switch(ageGroup) {
-                  case 'zlobek': ageModifier = "cute baby toddler style, nursery, extremely adorable"; break;
-                  case 'przedszkole': ageModifier = "cute style for young children, cheerful, magical"; break;
-                  case 'szkola': ageModifier = "cool modern style for school children, clear forms"; break;
-                  case 'starszaki': ageModifier = "stylish trendy design for teenagers, mature, aesthetic"; break;
-                  case 'uniwersalne': ageModifier = "clean elegant style, universal appeal, timeless illustration"; break;
-                  default: ageModifier = "";
-                }
+                let layoutStr = graphicLayout === 'full_background' ? "full background wallpaper" : "isolated single object on pure white background";
 
-                const fullPrompt = `${aiPrompt}, ${ageModifier}, ${styleModifier}`;
+                // Główny tekst to teraz po prostu Twoje słowo + kropka + delikatny styl
+                const fullPrompt = `${aiPrompt}. ${styleStr}, ${layoutStr}`;
                 
                 const longWaitTimer = setTimeout(() => {
                     setIsTakingLong(true);
@@ -251,7 +235,6 @@
                         imageUrl += `&model=${aiModel}`;
                     }
                     
-                    // WERSJA 2.2: Czyste wysyłanie. Jeśli się nie uda, trudno, pokażemy błąd. Żadnego dublowania.
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     
@@ -344,7 +327,7 @@
                     <nav className="bg-white border-b px-8 py-4 flex justify-between items-center print-hidden sticky top-0 z-50 shadow-sm">
                         <div className="flex items-center space-x-3 font-black text-2xl tracking-tight">
                             <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="Award" size={24}/></div>
-                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-blue-600 ml-1 font-bold bg-blue-50 px-2 py-1 rounded-md border border-blue-100">v2.2 Stabilna</span></span>
+                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-blue-600 ml-1 font-bold bg-blue-50 px-2 py-1 rounded-md border border-blue-100">v2.3 Czysta Forma</span></span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
@@ -366,26 +349,10 @@
                         {/* PANEL BOCZNY (Narzędzia) */}
                         <div className="lg:col-span-4 space-y-5 print-hidden flex flex-col">
                             
-                            {/* PIĘKNY PANEL KONFIGURACYJNY Z KAFELKAMI */}
                             <div className="bg-white p-5 rounded-3xl shadow-sm border border-indigo-100 space-y-5 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
                                 <h2 className="font-bold flex items-center text-indigo-900 text-sm uppercase tracking-widest"><Icon name="Settings" size={18} className="mr-2 text-indigo-500"/> Podstawa</h2>
                                 
-                                <div className="space-y-2">
-                                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dla kogo rysujemy?</label>
-                                  <div className="flex flex-wrap gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
-                                    {[
-                                      { id: 'zlobek', label: '👶 Żłobek' },
-                                      { id: 'przedszkole', label: '🎈 Przedszkole' },
-                                      { id: 'szkola', label: '🎒 Szkoła 1-3' },
-                                      { id: 'starszaki', label: '🎓 Starszaki' },
-                                      { id: 'uniwersalne', label: '🌍 Uniwersalne' }
-                                    ].map(age => (
-                                      <button key={age.id} onClick={() => setAgeGroup(age.id)} className={`flex-1 min-w-[80px] py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${ageGroup === age.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}>{age.label}</button>
-                                    ))}
-                                  </div>
-                                </div>
-
                                 <div className="space-y-2">
                                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Styl Grafiki</label>
                                   <div className="grid grid-cols-3 gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar">
@@ -470,12 +437,11 @@
                                                     <textarea 
                                                         value={aiPrompt} 
                                                         onChange={e => setAiPrompt(e.target.value)} 
-                                                        placeholder="Opisz co ma być na obrazku (np. uśmiechnięta sowa w okularach, pszczoła na kwiatku)..." 
+                                                        placeholder="Opisz co ma być na obrazku (np. sowa w okularach, piesek, jabłko)..." 
                                                         className="w-full p-4 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white resize-none"
                                                         rows="3"
                                                     />
                                                     
-                                                    {/* PRZEŁĄCZNIK SERWERÓW (Wersja 2.2) */}
                                                     <div className="flex flex-col gap-1.5 bg-white p-2.5 rounded-xl border border-indigo-100 shadow-sm">
                                                         <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest ml-1 text-center">Wybierz Serwer:</span>
                                                         <div className="flex gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100 w-full">
@@ -490,7 +456,6 @@
                                                     </button>
                                                 </div>
 
-                                                {/* KOMUNIKATY BŁĘDÓW I DŁUGIEGO OCZEKIWANIA */}
                                                 {isTakingLong && (
                                                     <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold text-center animate-pulse flex flex-col items-center justify-center gap-1 shadow-sm">
                                                         <span>⏳ Prosimy o cierpliwość...</span>
@@ -512,7 +477,6 @@
                                               </div>
                                             )}
                                         </div>
-                                        <p className="text-xs text-gray-400 text-center font-medium leading-relaxed">Wskazówka: Jeśli wygenerowałeś przed chwilą obrazek, a serwer zwraca błąd o przeciążeniu, <b>odczekaj 60 sekund</b> przed kolejnym kliknięciem, aby Twoja kolejka się zwolniła!</p>
                                     </div>
                                 )}
 
