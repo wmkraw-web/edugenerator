@@ -95,22 +95,27 @@
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    ctx.drawImage(img, 0, 0);
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imageData.data;
-                    for (let i = 0; i < data.length; i += 4) {
-                        if (data[i] > 240 && data[i+1] > 240 && data[i+2] > 240) {
-                            data[i+3] = 0; 
-                        } else if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
-                            data[i+3] = 100; 
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const data = imageData.data;
+                        for (let i = 0; i < data.length; i += 4) {
+                            if (data[i] > 240 && data[i+1] > 240 && data[i+2] > 240) {
+                                data[i+3] = 0; 
+                            } else if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
+                                data[i+3] = 100; 
+                            }
                         }
+                        ctx.putImageData(imageData, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch(e) {
+                        console.warn("Błąd usuwania tła (CORS zabezpieczenia):", e);
+                        resolve(imageSrc); // Zwraca oryginał, jeśli przeglądarka zablokuje płótno
                     }
-                    ctx.putImageData(imageData, 0, 0);
-                    resolve(canvas.toDataURL('image/png'));
                 };
                 img.onerror = () => resolve(imageSrc);
                 img.src = imageSrc;
@@ -232,37 +237,51 @@
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
                     
-                    // Usunięto wadliwy model=flux, wracamy do domyślnego i super stabilnego modelu AI
+                    // Ładujemy obraz za pomocą wbudowanego silnika przeglądarki (eliminuje błędy Fetch/CORS)
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
                     
-                    // Bezpieczne pobieranie pliku (eliminuje błędy blokowania przez przeglądarkę)
-                    const response = await fetch(imageUrl);
-                    if (!response.ok) {
-                        throw new Error("Serwer AI odrzucił zapytanie z powodu obciążenia.");
-                    }
-                    
-                    const blob = await response.blob();
-                    const objectUrl = URL.createObjectURL(blob);
-                    
                     const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    let isResolved = false;
+                    
                     img.onload = async () => {
-                        if (graphicLayout === 'full_background') {
-                            setCustomImage(objectUrl);
-                        } else {
-                            const transparentImg = await makeWhiteTransparent(objectUrl);
-                            setCustomImage(transparentImg);
+                        if (isResolved) return;
+                        isResolved = true;
+                        try {
+                            if (graphicLayout === 'full_background') {
+                                setCustomImage(imageUrl);
+                            } else {
+                                const transparentImg = await makeWhiteTransparent(imageUrl);
+                                setCustomImage(transparentImg);
+                            }
+                            setIsGenerating(false);
+                        } catch(e) {
+                            setCustomImage(imageUrl); // Użyj oryginału w razie błędu usuwania tła
+                            setIsGenerating(false);
                         }
-                        setIsGenerating(false);
                     };
+                    
                     img.onerror = () => {
-                        alert("Wystąpił problem z przetworzeniem obrazka w przeglądarce. Spróbuj ponownie.");
+                        if (isResolved) return;
+                        isResolved = true;
+                        alert("Serwer graficzny jest przeciążony. Spróbuj kliknąć 'Generuj' jeszcze raz za moment!");
                         setIsGenerating(false);
                     };
-                    img.src = objectUrl;
+                    
+                    // Timeout bezpieczeństwa - po 20 sekundach przerywamy
+                    setTimeout(() => {
+                        if (!isResolved) {
+                            isResolved = true;
+                            alert("Czas oczekiwania minął (serwer AI nie odpowiada). Możliwe, że to chwilowa awaria sieci. Spróbuj ponownie!");
+                            setIsGenerating(false);
+                        }
+                    }, 20000);
+                    
+                    img.src = imageUrl;
 
                 } catch (e) { 
                     console.error(e);
-                    alert(`Problem z serwerem AI. Proszę spróbować za chwilę!`);
+                    alert(`Wystąpił nieoczekiwany błąd aplikacji w Twojej przeglądarce.`);
                     setIsGenerating(false);
                 }
             };
@@ -447,7 +466,7 @@
                                                         rows="3"
                                                     />
                                                     <button onClick={handleGenerateAiImage} disabled={isGenerating} className="w-full bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center justify-center space-x-2">
-                                                        {isGenerating ? <span>Trwa rzucanie czarów (Tryb Turbo)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
+                                                        {isGenerating ? <span>⏳ Rysowanie grafiki (Proszę czekać)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
                                                     </button>
                                                 </div>
                                                 {customImage && (
