@@ -247,9 +247,10 @@
                 try {
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
                     
-                    // Niezawodna metoda ładowania obrazu omijająca rygorystyczne blokady przeglądarki
+                    // ZMIANA 1: Używamy &model=flux (najszybszy, nowy serwer pobierania)
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+                    
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     
@@ -267,10 +268,22 @@
                     };
                     
                     img.onerror = () => {
-                        clearTimeout(longWaitTimer);
-                        setIsTakingLong(false);
-                        setIsGenerating(false);
-                        setAiError("Serwer sztucznej inteligencji jest przeciążony lub połączenie zostało zablokowane. Kliknij 'Generuj' jeszcze raz!");
+                        // ZMIANA 2: Spadochron. Jeśli przeglądarka zablokowała usuwanie tła, ładujemy obraz awaryjnie.
+                        console.warn("Przeglądarka zablokowała modyfikację pikseli. Awaryjne wczytywanie...");
+                        const fallbackImg = new Image();
+                        fallbackImg.onload = () => {
+                            clearTimeout(longWaitTimer);
+                            setIsTakingLong(false);
+                            setCustomImage(imageUrl); // Wgra obraz, ale zostawi oryginalne białe tło
+                            setIsGenerating(false);
+                        };
+                        fallbackImg.onerror = () => {
+                            clearTimeout(longWaitTimer);
+                            setIsTakingLong(false);
+                            setIsGenerating(false);
+                            setAiError("Serwery AI są w tym momencie w 100% obciążone. Spróbuj zmienić opis obrazka i kliknij ponownie!");
+                        };
+                        fallbackImg.src = imageUrl;
                     };
                     
                     img.src = imageUrl;
