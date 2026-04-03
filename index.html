@@ -50,7 +50,6 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- IKONY SVG ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 Printer: <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>,
@@ -90,7 +89,6 @@
           { id: 'lato', name: 'Powitanie Lata', bg: 'bg-yellow-50', borderHex: '#facc15', elements: ['☀️', '🏖️'] }
         ];
 
-        // --- FUNKCJA PRZEZROCZYSTEGO TŁA (Wersja 100% stabilna z wczoraj) ---
         const makeWhiteTransparent = (imageSrc) => {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -205,8 +203,21 @@
                 setIsTakingLong(false);
                 setAiError(null);
                 
-                // --- IDEALNY KOD Z WCZORAJ (z blokadą liter i twarzy dzieci) ---
+                let translatedPrompt = aiPrompt;
                 
+                // --- NIEWIDZIALNY TŁUMACZ API (Rozwiązuje problem z niezrozumieniem słów przez AI) ---
+                try {
+                    const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(aiPrompt)}&langpair=pl|en`);
+                    const data = await res.json();
+                    if (data && data.responseData && data.responseData.translatedText) {
+                        translatedPrompt = data.responseData.translatedText;
+                        console.log("Przetłumaczono na:", translatedPrompt); // Dla testów
+                    }
+                } catch(e) {
+                    console.log("Błąd tłumaczenia, używamy oryginału", e);
+                }
+
+                // CZYSTE ANGIELSKIE POLECENIA (AI uwielbia angielski)
                 let layoutModifier = graphicLayout === 'full_background' 
                     ? "full frame background scene, edge-to-edge illustration, fully filled canvas" 
                     : "single distinct object, isolated on pure solid white background, no background elements, no text, no words, no letters";
@@ -235,7 +246,8 @@
                   default: ageModifier = "";
                 }
 
-                const fullPrompt = `${aiPrompt} - ${ageModifier}, ${styleModifier}`;
+                // AI w końcu dostaje polecenie w jednym języku: np. "owl in glasses - cheerful magical aesthetic..."
+                const fullPrompt = `${translatedPrompt} - ${ageModifier}, ${styleModifier}`;
                 
                 const longWaitTimer = setTimeout(() => {
                     setIsTakingLong(true);
@@ -245,7 +257,7 @@
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
                     
-                    // Powrót do wczorajszego, stabilnego linku z wymuszeniem omijania pamięci podręcznej (&r=)
+                    // Niezawodny model z wczoraj
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&r=${Date.now()}`;
                     
                     const img = new Image();
@@ -350,7 +362,7 @@
                     <nav className="bg-white border-b px-8 py-4 flex justify-between items-center print-hidden sticky top-0 z-50 shadow-sm">
                         <div className="flex items-center space-x-3 font-black text-2xl tracking-tight">
                             <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="Award" size={24}/></div>
-                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-indigo-600 ml-1 font-bold bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">v9.0 Mercedes Z Wczoraj</span></span>
+                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-indigo-600 ml-1 font-bold bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">v10.0 Inteligentna PL</span></span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
@@ -370,7 +382,7 @@
 
                     <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 w-full print:block print:p-0">
                         
-                        {/* PANEL BOCZNY (Usunięto min-w-0, co naprawiło przewijanie!) */}
+                        {/* PANEL BOCZNY */}
                         <div className="lg:col-span-4 space-y-5 print-hidden flex flex-col">
                             
                             <div className="bg-white p-5 rounded-3xl shadow-sm border border-indigo-100 space-y-5 relative overflow-hidden">
@@ -476,13 +488,13 @@
                                                     <textarea 
                                                         value={aiPrompt} 
                                                         onChange={e => setAiPrompt(e.target.value)} 
-                                                        placeholder="Po prostu wpisz po polsku (np. Samochód wyścigowy, dwa wesołe pieski, sowa w okularach)..." 
+                                                        placeholder="Po prostu wpisz co chcesz (np. sowa w okularach, wesoły zajączek, samochód wyścigowy)..." 
                                                         className="w-full p-4 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white resize-none"
                                                         rows="3"
                                                     />
 
                                                     <button onClick={handleGenerateAiImage} disabled={isGenerating} className="w-full bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center justify-center space-x-2">
-                                                        {isGenerating ? <span>⏳ Malowanie grafiki (Około 15-20 sekund)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
+                                                        {isGenerating ? <span>⏳ Tłumaczenie i Rysowanie (Około 15 sek)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
                                                     </button>
                                                 </div>
 
@@ -507,6 +519,7 @@
                                               </div>
                                             )}
                                         </div>
+                                        <p className="text-[10px] text-gray-400 text-center font-medium px-4">Teraz aplikacja posiada niewidzialnego tłumacza! AI dostaje Twoje polecenie w idealnym języku angielskim, co zapobiega pomyłkom.</p>
                                     </div>
                                 )}
 
@@ -624,8 +637,7 @@
                             </button>
                         </div>
 
-                        {/* OBSZAR PODGLĄDU (Usunięto overflow, co naprawiło przyklejanie!) */}
-                        {/* Dodatkowo zmniejszono szerokość obrazków (z w-80 na w-64), aby nie przysłaniały tak mocno tekstów */}
+                        {/* Obszar Podglądu */}
                         <div className="lg:col-span-8 flex justify-center items-start lg:sticky lg:top-28 self-start print:static">
                             {previewMode === 'diploma' ? (
                                 <div 
@@ -682,7 +694,7 @@
                                         }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full">{diplomaSubtitle}</h3>
                                     </div>
 
-                                    {/* Szyba (Glassmorphism) - Elastyczna struktura zapobiegająca wychodzeniu tekstu */}
+                                    {/* Szyba (Glassmorphism) */}
                                     <div 
                                         className="z-20 relative mx-auto flex flex-col items-center justify-center transition-all duration-300 py-6 px-8 md:py-10 md:px-14 rounded-[2rem] border border-white/40 shadow-xl my-auto flex-grow-0"
                                         style={{ 
@@ -770,7 +782,7 @@
                                         <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 3: Wybór Grafiki</h3>
                                         <ul className="list-disc pl-5 space-y-2">
                                             <li><strong>Błyskawicznie:</strong> Zakładka <em>Motywy</em> – kliknij w gotowy motyw (np. Kosmos, Wiosna), a system sam dobierze odpowiednie kolory i tła.</li>
-                                            <li><strong>Grafika AI (Premium):</strong> Zakładka <em>Grafika AI</em> – wpisz co chcesz zobaczyć (np. "uśmiechnięty kot"). Magia AI wygeneruje obrazek i usunie mu tło! <em>(Wymaga kodu dostępu)</em>.</li>
+                                            <li><strong>Grafika AI (Premium):</strong> Zakładka <em>Grafika AI</em> – po prostu wpisz po polsku co chcesz zobaczyć! <em>(Wymaga kodu dostępu)</em>.</li>
                                         </ul>
                                     </div>
 
