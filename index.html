@@ -247,34 +247,33 @@
                 try {
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
-                    
-                    // Nowy, znacznie stabilniejszy system pobierania przez Fetch API + Blob (Omija blokady CORS)
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
                     
-                    fetch(imageUrl)
-                        .then(response => {
-                            if (!response.ok) throw new Error("Serwer AI odrzucił zapytanie");
-                            return response.blob();
-                        })
-                        .then(async (blob) => {
-                            clearTimeout(longWaitTimer);
-                            setIsTakingLong(false);
-                            const objectUrl = URL.createObjectURL(blob);
-                            if (graphicLayout === 'full_background') {
-                                setCustomImage(objectUrl);
-                            } else {
-                                const transparentImg = await makeWhiteTransparent(objectUrl);
-                                setCustomImage(transparentImg);
-                            }
-                            setIsGenerating(false);
-                        })
-                        .catch(error => {
-                            clearTimeout(longWaitTimer);
-                            setIsTakingLong(false);
-                            setIsGenerating(false);
-                            console.error("Błąd AI:", error);
-                            setAiError("Serwer sztucznej inteligencji jest w tym momencie mocno przeciążony! Kliknij 'Generuj Grafikę' jeszcze raz za moment.");
-                        });
+                    // Niezawodna metoda ładowania obrazu omijająca rygorystyczne blokady przeglądarki
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    
+                    img.onload = async () => {
+                        clearTimeout(longWaitTimer);
+                        setIsTakingLong(false);
+                        
+                        if (graphicLayout === 'full_background') {
+                            setCustomImage(imageUrl);
+                        } else {
+                            const transparentImg = await makeWhiteTransparent(imageUrl);
+                            setCustomImage(transparentImg);
+                        }
+                        setIsGenerating(false);
+                    };
+                    
+                    img.onerror = () => {
+                        clearTimeout(longWaitTimer);
+                        setIsTakingLong(false);
+                        setIsGenerating(false);
+                        setAiError("Serwer sztucznej inteligencji jest przeciążony lub połączenie zostało zablokowane. Kliknij 'Generuj' jeszcze raz!");
+                    };
+                    
+                    img.src = imageUrl;
 
                 } catch (e) { 
                     clearTimeout(longWaitTimer);
