@@ -50,7 +50,6 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- IKONY SVG ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 Printer: <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>,
@@ -90,7 +89,6 @@
           { id: 'lato', name: 'Powitanie Lata', bg: 'bg-yellow-50', borderHex: '#facc15', elements: ['☀️', '🏖️'] }
         ];
 
-        // --- FUNKCJA PRZEZROCZYSTEGO TŁA ---
         const makeWhiteTransparent = (imageSrc) => {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -132,7 +130,6 @@
             const [accessCode, setAccessCode] = useState('');
             const [showInstructions, setShowInstructions] = useState(false);
             
-            // Dane Dyplomu
             const [diplomaTitle, setDiplomaTitle] = useState('DYPLOM');
             const [diplomaSubtitle, setDiplomaSubtitle] = useState('ZA WYBITNE OSIĄGNIĘCIA');
             const [studentName, setStudentName] = useState('Jan Kowalski');
@@ -140,7 +137,6 @@
             const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 31 Marca 2026');
             const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
             
-            // Formatowanie Tekstu 
             const [textFormats, setTextFormats] = useState({
                 title: { size: 64, bold: true, italic: false, color: '#1e293b' },
                 subtitle: { size: 24, bold: true, italic: false, color: '#1e293b' },
@@ -165,7 +161,6 @@
                 </div>
             );
 
-            // Rozmiary i Slidery
             const [boxWidth, setBoxWidth] = useState(85); 
             const [boxOpacity, setBoxOpacity] = useState(90); 
             const [boxOffset, setBoxOffset] = useState(0);
@@ -173,7 +168,6 @@
             const [garlandLetterOffset, setGarlandLetterOffset] = useState(50); 
             const [garlandText, setGarlandText] = useState('WITAJCIE');
 
-            // Wygląd i Kolory
             const [diplomaTextColor, setDiplomaTextColor] = useState('#1e293b');
             const [garlandTextColor, setGarlandTextColor] = useState('#6366f1');
             const [borderStyle, setBorderStyle] = useState('solid'); 
@@ -184,7 +178,7 @@
             const [artStyle, setArtStyle] = useState('watercolor'); 
             const [graphicLayout, setGraphicLayout] = useState('bottom_corners'); 
             const [diplomaOrientation, setDiplomaOrientation] = useState('horizontal');
-            const [ageGroup, setAgeGroup] = useState('przedszkole');
+            const [ageGroup, setAgeGroup] = useState('przedszkole'); // PRZYWRÓCONE!
 
             const [aiPrompt, setAiPrompt] = useState('');
             const [customImage, setCustomImage] = useState(null);
@@ -209,33 +203,32 @@
                 setIsTakingLong(false);
                 setAiError(null);
                 
-                // WERSJA 6.0: ZŁOTY ŚRODEK (Inteligentny model Flux + Wyłącznie polskie, czyste opisy bez rzeczowników "dzieci")
-                
                 let layoutModifier = graphicLayout === 'full_background' 
-                    ? "wypełnia całe tło, scena na całym obrazku, bez białego tła" 
-                    : "pojedynczy obiekt, czyste białe tło, wyizolowane, brak innych elementów w tle";
+                    ? "full frame background pattern" 
+                    : "single object strictly isolated on pure white solid background";
                 
                 let styleModifier = "";
                 switch(artStyle) {
-                  case 'watercolor': styleModifier = "malowane farbami akwarelowymi, miękkie estetyczne kolory"; break;
-                  case 'boho': styleModifier = "styl boho, stonowane barwy ziemi, estetyka minimalistyczna"; break;
-                  case 'doodle': styleModifier = "prosty uroczy szkic ręczny, styl rysunku ołówkiem, ilustracja książkowa"; break;
-                  case 'papercraft': styleModifier = "wycinanka z papieru 3D, miękkie cienie"; break;
-                  case 'vibrant': styleModifier = "żywe kolory, wysoki kontrast, kolorowa radosna ilustracja"; break;
-                  case 'pastel': styleModifier = "pastelowe jasne kolory, delikatne światło, marzycielskie"; break;
-                  case 'realistic': styleModifier = "bardzo szczegółowe, wysoce realistyczne, styl fotograficzny"; break;
-                  case '3d': styleModifier = "uroczy model 3D, styl plasteliny, miękkie oświetlenie"; break;
-                  case 'comic': styleModifier = "styl komiksowy pop art, płaskie kolory z czarnymi konturami"; break;
-                  default: styleModifier = "płaska ilustracja wektorowa";
+                  case 'watercolor': styleModifier = "beautiful watercolor painting"; break;
+                  case 'boho': styleModifier = "boho aesthetic art"; break;
+                  case 'doodle': styleModifier = "cute simple doodle drawing"; break;
+                  case 'papercraft': styleModifier = "3d papercraft art"; break;
+                  case 'vibrant': styleModifier = "vibrant colorful cartoon"; break;
+                  case 'pastel': styleModifier = "soft pastel art"; break;
+                  case 'realistic': styleModifier = "highly realistic photo"; break;
+                  case '3d': styleModifier = "cute 3d clay render"; break;
+                  case 'comic': styleModifier = "comic book style"; break;
+                  default: styleModifier = "illustration";
                 }
 
+                // PRZYWRÓCONE i bezpieczne (Zero słów typu baby/children, same estetyczne dopiski, by chronić układ i logikę)
                 let ageModifier = "";
                 switch(ageGroup) {
-                  case 'zlobek': ageModifier = "niezwykle urocze, łagodne kształty, uśmiechnięte, przyjazne"; break; // ZERO SŁÓW "NIEMOWLĘ" / "DZIECKO"
-                  case 'przedszkole': ageModifier = "wesołe, kolorowe, radosne, urocze, bajkowe"; break; // ZERO SŁÓW "PRZEDSZKOLAK"
-                  case 'szkola': ageModifier = "nowoczesne, wyraźne, edukacyjne"; break;
-                  case 'starszaki': ageModifier = "stylowe, estetyczne, dla młodzieży"; break;
-                  case 'uniwersalne': ageModifier = "czyste, uniwersalne, eleganckie"; break;
+                  case 'zlobek': ageModifier = "cute nursery aesthetic, soft friendly shapes"; break;
+                  case 'przedszkole': ageModifier = "cheerful magical aesthetic, colorful, playful"; break;
+                  case 'szkola': ageModifier = "modern educational style, clear forms"; break;
+                  case 'starszaki': ageModifier = "stylish trendy aesthetic, mature"; break;
+                  case 'uniwersalne': ageModifier = "clean elegant style, universal appeal"; break;
                   default: ageModifier = "";
                 }
 
@@ -249,7 +242,6 @@
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
                     
-                    // NAJWAŻNIEJSZE: Zawsze wymuszamy model "flux" (Tylko on rozumie po polsku)
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
                     
                     const img = new Image();
@@ -276,7 +268,7 @@
                         setAiError(
                             <div className="flex flex-col items-center gap-2">
                                 <span className="font-bold">Błąd pobierania obrazka 🛑</span>
-                                <span className="font-normal text-[10px]">Serwer Flux jest w tej sekundzie obciążony (kolejka). Odczekaj chwilę i spróbuj ponownie.</span>
+                                <span className="font-normal text-[10px]">Serwer AI jest obciążony (kolejka). Odczekaj 30 sekund i spróbuj ponownie.</span>
                                 <a href={imageUrl} target="_blank" rel="noreferrer" className="mt-1 bg-indigo-100 px-3 py-2 rounded-lg border border-indigo-200 text-indigo-800 hover:bg-indigo-200 transition-colors shadow-sm font-bold w-full break-all text-center">
                                     👉 Kliknij tu, aby zobaczyć powód
                                 </a>
@@ -344,7 +336,7 @@
                     <nav className="bg-white border-b px-8 py-4 flex justify-between items-center print-hidden sticky top-0 z-50 shadow-sm">
                         <div className="flex items-center space-x-3 font-black text-2xl tracking-tight">
                             <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="Award" size={24}/></div>
-                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-indigo-600 ml-1 font-bold bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">v6.0 Ostateczna</span></span>
+                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-indigo-600 ml-1 font-bold bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">v8.0 Ostateczna</span></span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
@@ -363,13 +355,14 @@
                     </nav>
 
                     <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 w-full print:block print:p-0">
-                        {/* PANEL BOCZNY (Narzędzia) */}
-                        <div className="lg:col-span-4 space-y-5 print-hidden flex flex-col">
+                        {/* PANEL BOCZNY (Narzędzia) - Dodano min-w-0 aby uniknąć wychodzenia poza ekran */}
+                        <div className="lg:col-span-4 space-y-5 print-hidden flex flex-col min-w-0">
                             
                             <div className="bg-white p-5 rounded-3xl shadow-sm border border-indigo-100 space-y-5 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
                                 <h2 className="font-bold flex items-center text-indigo-900 text-sm uppercase tracking-widest"><Icon name="Settings" size={18} className="mr-2 text-indigo-500"/> Podstawa</h2>
                                 
+                                {/* PRZYWRÓCONA SEKCJA "DLA KOGO RYSUJEMY" - Przywraca poprawne przesuwanie i układ (Sticky) */}
                                 <div className="space-y-2">
                                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dla kogo rysujemy?</label>
                                   <div className="flex flex-wrap gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
@@ -469,20 +462,20 @@
                                                     <textarea 
                                                         value={aiPrompt} 
                                                         onChange={e => setAiPrompt(e.target.value)} 
-                                                        placeholder="Po prostu wpisz po polsku (np. Samochód wyścigowy, dwa wesołe pieski, sowa w okularach)..." 
+                                                        placeholder="Po prostu wpisz co chcesz (np. samochód wyścigowy, urocze pieski, sowa w okularach)..." 
                                                         className="w-full p-4 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white resize-none"
                                                         rows="3"
                                                     />
 
                                                     <button onClick={handleGenerateAiImage} disabled={isGenerating} className="w-full bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center justify-center space-x-2">
-                                                        {isGenerating ? <span>⏳ Rysowanie grafiki (To potrwa chwilę)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
+                                                        {isGenerating ? <span>⏳ Malowanie grafiki (Około 15-20 sekund)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
                                                     </button>
                                                 </div>
 
                                                 {isTakingLong && (
                                                     <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold text-center animate-pulse flex flex-col items-center justify-center gap-1 shadow-sm">
                                                         <span>⏳ Prosimy o cierpliwość...</span>
-                                                        <span className="font-medium text-[10px]">Trwa malowanie. Przeglądarka lada moment pobierze grafikę!</span>
+                                                        <span className="font-medium text-[10px]">Trwa generowanie obrazu z AI. Serwer może mieć dużą kolejkę!</span>
                                                     </div>
                                                 )}
                                                 
@@ -617,12 +610,12 @@
                             </button>
                         </div>
 
-                        {/* Obszar Podglądu (Prawy Panel) */}
-                        <div className="lg:col-span-8 flex justify-center items-start lg:sticky lg:top-28 self-start print:static">
+                        {/* Obszar Podglądu (Prawy Panel) - Dodano min-w-0 aby uniknąć wychodzenia poza kolumnę na boki */}
+                        <div className="lg:col-span-8 flex justify-center items-start lg:sticky lg:top-28 self-start print:static min-w-0 w-full overflow-x-hidden">
                             {previewMode === 'diploma' ? (
                                 <div 
                                     id="print-area"
-                                    className={`relative flex flex-col justify-between ${diplomaOrientation === 'horizontal' ? 'w-full aspect-[1.414]' : 'w-[85%] mx-auto aspect-[0.707]'} ${activeTheme.bg} rounded-[2.5rem] p-10 md:p-14 text-center shadow-2xl shadow-gray-200 transition-all duration-500 overflow-hidden bg-cover bg-center bg-no-repeat`}
+                                    className={`relative flex flex-col justify-between ${diplomaOrientation === 'horizontal' ? 'w-full aspect-[1.414]' : 'w-[85%] mx-auto aspect-[0.707]'} ${activeTheme.bg} rounded-[2.5rem] p-10 md:p-14 text-center shadow-2xl shadow-gray-200 transition-all duration-500 overflow-hidden bg-cover bg-center bg-no-repeat max-w-full`}
                                     style={{ 
                                         borderWidth: `${borderWidth}px`,
                                         borderStyle: borderStyle,
@@ -664,14 +657,14 @@
                                             color: textFormats.title.color,
                                             fontWeight: textFormats.title.bold ? 'bold' : 'normal',
                                             fontStyle: textFormats.title.italic ? 'italic' : 'normal'
-                                        }} className="tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full">{diplomaTitle}</h1>
+                                        }} className="tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full block">{diplomaTitle}</h1>
                                         
                                         <h3 style={{ 
                                             fontSize: `${textFormats.subtitle.size}px`, 
                                             color: textFormats.subtitle.color,
                                             fontWeight: textFormats.subtitle.bold ? 'bold' : 'normal',
                                             fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal'
-                                        }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full">{diplomaSubtitle}</h3>
+                                        }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full block">{diplomaSubtitle}</h3>
                                     </div>
 
                                     {/* Szyba (Glassmorphism) - Elastyczna struktura zapobiegająca wychodzeniu tekstu */}
@@ -746,7 +739,7 @@
                                     
                                     <div className="space-y-3">
                                         <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 1: Podstawa (Wybór stylu)</h3>
-                                        <p>Zacznij od lewego panelu bocznego, w sekcji <strong>Podstawa</strong>. Zdecyduj dla kogo tworzysz (np. Żłobek, Przedszkole), wybierz styl grafiki, określ gdzie na stronie mają być obrazki oraz dobierz ulubioną czcionkę.</p>
+                                        <p>Zacznij od lewego panelu bocznego, w sekcji <strong>Podstawa</strong>. Wybierz styl grafiki, określ gdzie na stronie mają być obrazki oraz dobierz ulubioną czcionkę.</p>
                                     </div>
 
                                     <div className="space-y-3">
@@ -762,7 +755,7 @@
                                         <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 3: Wybór Grafiki</h3>
                                         <ul className="list-disc pl-5 space-y-2">
                                             <li><strong>Błyskawicznie:</strong> Zakładka <em>Motywy</em> – kliknij w gotowy motyw (np. Kosmos, Wiosna), a system sam dobierze odpowiednie kolory i tła.</li>
-                                            <li><strong>Grafika AI (Premium):</strong> Zakładka <em>Grafika AI</em> – wpisz co chcesz zobaczyć (np. "uśmiechnięty kot"). Magia AI wygeneruje obrazek i usunie mu tło! <em>(Wymaga kodu dostępu)</em>.</li>
+                                            <li><strong>Grafika AI (Premium):</strong> Zakładka <em>Grafika AI</em> – po prostu wpisz po polsku co chcesz zobaczyć! <em>(Wymaga kodu dostępu)</em>.</li>
                                         </ul>
                                     </div>
 
