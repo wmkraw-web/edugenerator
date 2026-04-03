@@ -93,7 +93,9 @@
         const makeWhiteTransparent = (imageSrc) => {
             return new Promise((resolve) => {
                 const img = new Image();
-                img.crossOrigin = 'Anonymous';
+                if (!imageSrc.startsWith('blob:')) {
+                    img.crossOrigin = 'Anonymous';
+                }
                 img.onload = () => {
                     try {
                         const canvas = document.createElement('canvas');
@@ -189,6 +191,8 @@
             const [aiPrompt, setAiPrompt] = useState('');
             const [customImage, setCustomImage] = useState(null);
             const [isGenerating, setIsGenerating] = useState(false);
+            const [isTakingLong, setIsTakingLong] = useState(false);
+            const [aiError, setAiError] = useState('');
 
             const activeTheme = THEMES.find(t => t.id === selectedThemeId) || THEMES[0];
 
@@ -204,6 +208,8 @@
             const handleGenerateAiImage = async () => {
                 if (!aiPrompt.trim()) return;
                 setIsGenerating(true);
+                setIsTakingLong(false);
+                setAiError('');
                 
                 let styleModifier = "";
                 let layoutModifier = graphicLayout === 'full_background' ? "full frame background scene, edge-to-edge illustration, no white background, fully filled canvas" : "single distinct object, isolated on pure white background, no scattered elements";
@@ -233,56 +239,49 @@
 
                 const fullPrompt = `${aiPrompt} - ${ageModifier}, ${styleModifier}`;
                 
+                // Uruchamiamy licznik. Jeśli po 6 sekundach obrazek się nie wygeneruje, pokażemy komunikat
+                const longWaitTimer = setTimeout(() => {
+                    setIsTakingLong(true);
+                }, 6000);
+                
                 try {
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
                     
-                    // Ładujemy obraz za pomocą wbudowanego silnika przeglądarki (eliminuje błędy Fetch/CORS)
+                    // Nowy, znacznie stabilniejszy system pobierania przez Fetch API + Blob (Omija blokady CORS)
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
                     
-                    const img = new Image();
-                    img.crossOrigin = "Anonymous";
-                    let isResolved = false;
-                    
-                    img.onload = async () => {
-                        if (isResolved) return;
-                        isResolved = true;
-                        try {
+                    fetch(imageUrl)
+                        .then(response => {
+                            if (!response.ok) throw new Error("Serwer AI odrzucił zapytanie");
+                            return response.blob();
+                        })
+                        .then(async (blob) => {
+                            clearTimeout(longWaitTimer);
+                            setIsTakingLong(false);
+                            const objectUrl = URL.createObjectURL(blob);
                             if (graphicLayout === 'full_background') {
-                                setCustomImage(imageUrl);
+                                setCustomImage(objectUrl);
                             } else {
-                                const transparentImg = await makeWhiteTransparent(imageUrl);
+                                const transparentImg = await makeWhiteTransparent(objectUrl);
                                 setCustomImage(transparentImg);
                             }
                             setIsGenerating(false);
-                        } catch(e) {
-                            setCustomImage(imageUrl); // Użyj oryginału w razie błędu usuwania tła
+                        })
+                        .catch(error => {
+                            clearTimeout(longWaitTimer);
+                            setIsTakingLong(false);
                             setIsGenerating(false);
-                        }
-                    };
-                    
-                    img.onerror = () => {
-                        if (isResolved) return;
-                        isResolved = true;
-                        alert("Serwer graficzny jest przeciążony. Spróbuj kliknąć 'Generuj' jeszcze raz za moment!");
-                        setIsGenerating(false);
-                    };
-                    
-                    // Timeout bezpieczeństwa - po 20 sekundach przerywamy
-                    setTimeout(() => {
-                        if (!isResolved) {
-                            isResolved = true;
-                            alert("Czas oczekiwania minął (serwer AI nie odpowiada). Możliwe, że to chwilowa awaria sieci. Spróbuj ponownie!");
-                            setIsGenerating(false);
-                        }
-                    }, 20000);
-                    
-                    img.src = imageUrl;
+                            console.error("Błąd AI:", error);
+                            setAiError("Serwer sztucznej inteligencji jest w tym momencie mocno przeciążony! Kliknij 'Generuj Grafikę' jeszcze raz za moment.");
+                        });
 
                 } catch (e) { 
-                    console.error(e);
-                    alert(`Wystąpił nieoczekiwany błąd aplikacji w Twojej przeglądarce.`);
+                    clearTimeout(longWaitTimer);
+                    setIsTakingLong(false);
                     setIsGenerating(false);
+                    console.error(e);
+                    setAiError("Wystąpił nieoczekiwany błąd w Twojej przeglądarce.");
                 }
             };
 
@@ -469,6 +468,21 @@
                                                         {isGenerating ? <span>⏳ Rysowanie grafiki (Proszę czekać)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
                                                     </button>
                                                 </div>
+
+                                                {/* KOMUNIKATY BŁĘDÓW I DŁUGIEGO OCZEKIWANIA */}
+                                                {isTakingLong && (
+                                                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold text-center animate-pulse flex flex-col items-center justify-center gap-1 shadow-sm">
+                                                        <span>⏳ Prosimy o cierpliwość...</span>
+                                                        <span className="font-medium text-[10px]">Obecnie dużo osób korzysta z aplikacji i czas generowania się wydłuża.</span>
+                                                    </div>
+                                                )}
+                                                
+                                                {aiError && (
+                                                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold text-center shadow-sm">
+                                                        {aiError}
+                                                    </div>
+                                                )}
+
                                                 {customImage && (
                                                     <button onClick={() => setCustomImage(null)} className="w-full mt-2 text-xs font-bold text-red-500 hover:text-red-700 py-2.5 border border-red-100 rounded-xl hover:bg-red-50 transition-colors">
                                                         Usuń wygenerowaną grafikę i wróć do motywów
