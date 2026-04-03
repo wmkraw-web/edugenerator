@@ -193,6 +193,830 @@
             const [isGenerating, setIsGenerating] = useState(false);
             const [isTakingLong, setIsTakingLong] = useState(false);
             const [aiError, setAiError] = useState(null); // Zmiana na null, by przyjmować JSX
+            const [aiModel, setAiModel] = useState('flux'); // NOWY STAN: Przełącznik serwerów
+
+            const activeTheme = THEMES.find(t => t.id === selectedThemeId) || THEMES[0];
+
+            useEffect(() => {
+                setGarlandTextColor(activeTheme.borderHex);
+            }, [selectedThemeId]);
+
+            const handleVerifyCode = () => {
+                if (accessCode.toUpperCase() === 'KAWA2024') { setIsPremium(true); setAccessCode(''); }
+                else alert('Nieprawidłowy kod!');
+            };
+
+            const handleGenerateAiImage = async () => {
+                if (!aiPrompt.trim()) return;
+                setIsGenerating(true);
+                setIsTakingLong(false);
+                setAiError(null);
+                
+                let styleModifier = "";
+                let layoutModifier = graphicLayout === 'full_background' ? "full frame background scene, edge-to-edge illustration, no white background, fully filled canvas" : "single distinct object, isolated on pure white background, no scattered elements";
+                
+                switch(artStyle) {
+                  case 'watercolor': styleModifier = `beautiful watercolor art, soft pastel colors, painted artistic style, aesthetic, ${layoutModifier}`; break;
+                  case 'boho': styleModifier = `trendy boho style art, earthy muted pastel colors, minimalist decor, aesthetic shapes, ${layoutModifier}`; break;
+                  case 'doodle': styleModifier = `hand drawn doodle sketch, colored pencil style, book illustration, cozy, ${layoutModifier}`; break;
+                  case 'papercraft': styleModifier = `3d papercraft illustration, layered paper cutout style, soft shadows, ${layoutModifier}`; break;
+                  case 'vibrant': styleModifier = `vibrant bold colors, high contrast, vivid, colorful cartoon illustration, energetic, ${layoutModifier}`; break;
+                  case 'pastel': styleModifier = `soft pastel aesthetic, dreamy colors, gentle lighting, cute pinterest style, ${layoutModifier}`; break;
+                  case 'realistic': styleModifier = `highly detailed, highly realistic, photography style, 8k resolution, cinematic lighting, ${layoutModifier}`; break;
+                  case '3d': styleModifier = `cute 3d render, claymation style, soft lighting, smooth 3d illustration, ${layoutModifier}`; break;
+                  case 'comic': styleModifier = `comic book style, cel shaded, pop art, vibrant flat colors with black outlines, ${layoutModifier}`; break;
+                  default: styleModifier = `flat vector illustration, ${layoutModifier}`;
+                }
+
+                let ageModifier = "";
+                switch(ageGroup) {
+                  case 'zlobek': ageModifier = "cute baby toddler style, nursery, extremely adorable"; break;
+                  case 'przedszkole': ageModifier = "cute style for young children, cheerful, magical"; break;
+                  case 'szkola': ageModifier = "cool modern style for school children, clear forms"; break;
+                  case 'starszaki': ageModifier = "stylish trendy design for teenagers, mature, aesthetic"; break;
+                  case 'uniwersalne': ageModifier = "clean elegant style, universal appeal, timeless illustration"; break;
+                  default: ageModifier = "";
+                }
+
+                const fullPrompt = `${aiPrompt} - ${ageModifier}, ${styleModifier}`;
+                
+                const longWaitTimer = setTimeout(() => {
+                    setIsTakingLong(true);
+                }, 6000);
+                
+                try {
+                    const seed = Math.floor(Math.random() * 1000000);
+                    const encodedPrompt = encodeURIComponent(fullPrompt);
+                    
+                    // Używamy zmiennej aiModel do zmiany serwera
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=${aiModel}`;
+                    
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    
+                    img.onload = async () => {
+                        clearTimeout(longWaitTimer);
+                        setIsTakingLong(false);
+                        
+                        if (graphicLayout === 'full_background') {
+                            setCustomImage(imageUrl);
+                        } else {
+                            const transparentImg = await makeWhiteTransparent(imageUrl);
+                            setCustomImage(transparentImg);
+                        }
+                        setIsGenerating(false);
+                    };
+                    
+                    img.onerror = () => {
+                        // Jeśli wpadniemy tutaj, to znaczy że przeglądarka zablokowała obraz (CORS lub AdBlock)
+                        console.warn("Zablokowano pobieranie przez CORS. Próba awaryjna...");
+                        
+                        const fallbackImg = new Image();
+                        fallbackImg.onload = () => {
+                            clearTimeout(longWaitTimer);
+                            setIsTakingLong(false);
+                            setCustomImage(imageUrl);
+                            setIsGenerating(false);
+                        };
+                        fallbackImg.onerror = () => {
+                            // Jeśli wpadniemy tutaj, oznacza to 100% blokadę domeny przez AdBlocka/Antywirusa
+                            clearTimeout(longWaitTimer);
+                            setIsTakingLong(false);
+                            setIsGenerating(false);
+                            setAiError(
+                                <div className="flex flex-col items-center gap-2">
+                                    <span>Twoja przeglądarka zablokowała pobieranie grafiki AI! 🛑</span>
+                                    <span className="font-normal text-[10px]">Prawdopodobnie to wina włączonego AdBlocka, uBlocka lub szkolnej sieci Wi-Fi.</span>
+                                    <a href={imageUrl} target="_blank" rel="noreferrer" className="mt-1 bg-red-100 px-3 py-2 rounded-lg border border-red-200 text-red-800 hover:bg-red-200 transition-colors shadow-sm">
+                                        👉 Kliknij tu, aby sprawdzić w nowej karcie
+                                    </a>
+                                </div>
+                            );
+                        };
+                        fallbackImg.src = imageUrl;
+                    };
+                    
+                    img.src = imageUrl;
+
+                } catch (e) { 
+                    clearTimeout(longWaitTimer);
+                    setIsTakingLong(false);
+                    setIsGenerating(false);
+                    console.error(e);
+                    setAiError("Wystąpił nieoczekiwany błąd w przeglądarce.");
+                }
+            };
+
+            const renderGarlandShape = (letter) => {
+                let fillVal = '#ffffff';
+                if (activeTheme.id === 'boho') fillVal = '#FAF9F6';
+                if (activeTheme.id === 'rodzina') fillVal = '#fff1f2';
+                if (activeTheme.bg.includes('blue-50')) fillVal = '#eff6ff';
+                if (activeTheme.bg.includes('indigo-900')) fillVal = '#312e81';
+
+                return (
+                    <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden drop-shadow-lg">
+                        <svg viewBox="0 0 100 120" className="w-full h-full" preserveAspectRatio="none">
+                            <path d="M5,5 L95,5 L50,115 Z" fill={fillVal} stroke={activeTheme.borderHex} strokeWidth={borderWidth/2} strokeDasharray={borderStyle === 'dashed' ? '5,5' : 'none'} strokeLinejoin="round" />
+                            <circle cx="15" cy="15" r="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.5"/>
+                            <circle cx="85" cy="15" r="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.5"/>
+                        </svg>
+                        
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
+                            {customImage && <img src={customImage} className="absolute inset-x-0 top-[40%] -translate-y-1/2 m-auto w-48 h-48 object-contain opacity-20 pointer-events-none" />}
+                            
+                            <div className="absolute border-2 border-dashed rounded-full flex items-center justify-center"
+                                 style={{ 
+                                     borderColor: activeTheme.borderHex, 
+                                     width: `${garlandLetterSize * 1.5}px`, 
+                                     height: `${garlandLetterSize * 1.5}px`,
+                                     transform: `translateY(${garlandLetterOffset}px)`,
+                                     opacity: 0.3
+                                 }}>
+                            </div>
+
+                            <span 
+                                className="font-black leading-none select-none z-10" 
+                                style={{
+                                    color: garlandTextColor, 
+                                    fontSize: `${garlandLetterSize}px`,
+                                    transform: `translateY(${garlandLetterOffset}px)`
+                                }}
+                            >
+                                {letter}
+                            </span>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className={`min-h-screen flex flex-col ${selectedFont}`}>
+                    {/* Nawigacja Górna */}
+                    <nav className="bg-white border-b px-8 py-4 flex justify-between items-center print-hidden sticky top-0 z-50 shadow-sm">
+                        <div className="flex items-center space-x-3 font-black text-2xl tracking-tight">
+                            <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="Award" size={24}/></div>
+                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span></span>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
+                                <Icon name="HelpCircle" size={20} /> <span className="hidden sm:inline">Jak używać?</span>
+                            </button>
+                            {!isPremium && (
+                                <div className="flex items-center space-x-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
+                                    <input value={accessCode} onChange={e => setAccessCode(e.target.value)} placeholder="Kod dostępu..." className="p-2 bg-transparent text-sm w-32 outline-none font-medium text-gray-700"/>
+                                    <button onClick={handleVerifyCode} className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition-colors"><Icon name="Key" size={16}/></button>
+                                </div>
+                            )}
+                            <button onClick={() => window.open('https://buycoffee.to/magiccolor')} className="flex items-center space-x-2 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-yellow-900 px-5 py-2.5 rounded-xl font-bold shadow-sm transition-all active:scale-95">
+                                <Icon name="Coffee" size={20} /><span>{isPremium ? "Dzięki za Kawę!" : "Postaw Kawę"}</span>
+                            </button>
+                        </div>
+                    </nav>
+
+                    <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 w-full print:block print:p-0">
+                        {/* PANEL BOCZNY (Narzędzia) */}
+                        <div className="lg:col-span-4 space-y-5 print-hidden flex flex-col">
+                            
+                            {/* PIĘKNY PANEL KONFIGURACYJNY Z KAFELKAMI */}
+                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-indigo-100 space-y-5 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                                <h2 className="font-bold flex items-center text-indigo-900 text-sm uppercase tracking-widest"><Icon name="Settings" size={18} className="mr-2 text-indigo-500"/> Podstawa</h2>
+                                
+                                <div className="space-y-2">
+                                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dla kogo rysujemy?</label>
+                                  <div className="flex flex-wrap gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                                    {[
+                                      { id: 'zlobek', label: '👶 Żłobek' },
+                                      { id: 'przedszkole', label: '🎈 Przedszkole' },
+                                      { id: 'szkola', label: '🎒 Szkoła 1-3' },
+                                      { id: 'starszaki', label: '🎓 Starszaki' },
+                                      { id: 'uniwersalne', label: '🌍 Uniwersalne' }
+                                    ].map(age => (
+                                      <button key={age.id} onClick={() => setAgeGroup(age.id)} className={`flex-1 min-w-[80px] py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${ageGroup === age.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}>{age.label}</button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Styl Grafiki</label>
+                                  <div className="grid grid-cols-3 gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar">
+                                    {[
+                                      { id: 'watercolor', label: '🎨 Akwarela' },
+                                      { id: 'boho', label: '🤎 Boho' },
+                                      { id: 'vibrant', label: '🌈 Wyraziste' },
+                                      { id: 'doodle', label: '✏️ Doodle' },
+                                      { id: 'papercraft', label: '✂️ Wycinanka' },
+                                      { id: 'pastel', label: '🌸 Pastele' },
+                                      { id: '3d', label: '🧊 3D' },
+                                      { id: 'realistic', label: '📸 Realizm' },
+                                      { id: 'comic', label: '💬 Komiks' }
+                                    ].map(style => (
+                                      <button key={style.id} onClick={() => setArtStyle(style.id)} className={`py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${artStyle === style.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}>{style.label}</button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                  <div className="flex-1 space-y-2">
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Układ</label>
+                                    <div className="flex gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                                      <button onClick={() => setGraphicLayout('bottom_corners')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border ${graphicLayout === 'bottom_corners' ? 'bg-white shadow border-indigo-200 text-indigo-700' : 'border-transparent text-gray-500 hover:bg-gray-200'}`}>✨ Rogi</button>
+                                      <button onClick={() => setGraphicLayout('bottom_center')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border ${graphicLayout === 'bottom_center' ? 'bg-white shadow border-indigo-200 text-indigo-700' : 'border-transparent text-gray-500 hover:bg-gray-200'}`}>🌟 Środek</button>
+                                      <button onClick={() => setGraphicLayout('full_background')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border ${graphicLayout === 'full_background' ? 'bg-white shadow border-indigo-200 text-indigo-700' : 'border-transparent text-gray-500 hover:bg-gray-200'}`}>🖼️ Tło</button>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 space-y-2">
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Orientacja</label>
+                                    <div className="flex gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                                      <button onClick={() => setDiplomaOrientation('horizontal')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border ${diplomaOrientation === 'horizontal' ? 'bg-white shadow border-indigo-200 text-indigo-700' : 'border-transparent text-gray-500 hover:bg-gray-200'}`}>↔️ Poziom</button>
+                                      <button onClick={() => setDiplomaOrientation('vertical')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border ${diplomaOrientation === 'vertical' ? 'bg-white shadow border-indigo-200 text-indigo-700' : 'border-transparent text-gray-500 hover:bg-gray-200'}`}>↕️ Pion</button>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 block mb-1.5 uppercase tracking-wider">Wybierz Czcionkę</label>
+                                    <select value={selectedFont} onChange={e => setSelectedFont(e.target.value)} className="w-full p-2.5 border border-gray-200 rounded-xl text-sm outline-none bg-gray-50 cursor-pointer font-medium">
+                                        <option value="font-sans">Montserrat</option>
+                                        <option value="font-balsamiq">Balsamiq</option>
+                                        <option value="font-caveat">Caveat (Odręczna)</option>
+                                        <option value="font-pacifico">Pacifico</option>
+                                        <option value="font-dancing">Dancing Script</option>
+                                        <option value="font-lobster">Lobster</option>
+                                        <option value="font-playfair">Playfair (Elegancka)</option>
+                                        <option value="font-amatic">Amatic SC</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Zakładki */}
+                            <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1 flex-wrap sm:flex-nowrap">
+                                <button onClick={() => {setActiveTab('diploma'); setPreviewMode('diploma');}} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'diploma' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Award" size={18} className="mb-1.5"/>Dyplom</button>
+                                <button onClick={() => {setActiveTab('garland'); setPreviewMode('garland');}} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'garland' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Type" size={18} className="mb-1.5"/>Girlanda</button>
+                                <button onClick={() => setActiveTab('ai')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'ai' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Wand2" size={18} className="mb-1.5 text-purple-500"/>Grafika AI</button>
+                                <button onClick={() => setActiveTab('themes')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'themes' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Palette" size={18} className="mb-1.5"/>Motywy</button>
+                                <button onClick={() => setActiveTab('sliders')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'sliders' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Sliders" size={18} className="mb-1.5"/>Szlify</button>
+                            </div>
+
+                            {/* Zawartość Zakładek */}
+                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex-1">
+                                
+                                {activeTab === 'ai' && (
+                                    <div className="space-y-5">
+                                        <div className="bg-gradient-to-br from-indigo-50 to-white p-5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-3 opacity-10"><Icon name="Wand2" size={40}/></div>
+                                            
+                                            {!isPremium ? (
+                                              <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 text-center space-y-3 relative z-10">
+                                                <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center text-indigo-400 mb-2 shadow-sm">
+                                                    <Icon name="Lock" size={24} />
+                                                </div>
+                                                <h3 className="font-bold text-indigo-900 text-sm">Funkcja Premium (Moduł AI)</h3>
+                                                <p className="text-xs text-indigo-700">Wpisz kod Premium na górnym pasku, aby odblokować darmowy generator grafik AI. Otrzymasz go wspierając moją pracę wirtualną kawą!</p>
+                                              </div>
+                                            ) : (
+                                              <div className="relative z-10 space-y-4">
+                                                <label className="text-[11px] font-black text-indigo-800 block uppercase tracking-widest">Magiczny Kreator Obrazków</label>
+                                                <div className="flex flex-col space-y-3">
+                                                    <textarea 
+                                                        value={aiPrompt} 
+                                                        onChange={e => setAiPrompt(e.target.value)} 
+                                                        placeholder="Opisz co ma być na obrazku (np. uśmiechnięta sowa w okularach, pszczoła na kwiatku)..." 
+                                                        className="w-full p-4 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white resize-none"
+                                                        rows="3"
+                                                    />
+                                                    
+                                                    {/* NOWY PRZEŁĄCZNIK SERWERÓW */}
+                                                    <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-indigo-100 shadow-sm">
+                                                        <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest ml-1">Serwer AI:</span>
+                                                        <div className="flex gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
+                                                            <button onClick={() => setAiModel('flux')} className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-colors ${aiModel === 'flux' ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-200'}`}>Główny</button>
+                                                            <button onClick={() => setAiModel('turbo')} className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-colors ${aiModel === 'turbo' ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-200'}`}>Zapasowy</button>
+                                                        </div>
+                                                    </div>
+
+                                                    <button onClick={handleGenerateAiImage} disabled={isGenerating} className="w-full bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center justify-center space-x-2">
+                                                        {isGenerating ? <span>⏳ Rysowanie grafiki (Proszę czekać)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
+                                                    </button>
+                                                </div>
+
+                                                {/* KOMUNIKATY BŁĘDÓW I DŁUGIEGO OCZEKIWANIA */}
+                                                {isTakingLong && (
+                                                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold text-center animate-pulse flex flex-col items-center justify-center gap-1 shadow-sm">
+                                                        <span>⏳ Prosimy o cierpliwość...</span>
+                                                        <span className="font-medium text-[10px]">Obecnie dużo osób korzysta z aplikacji i czas generowania się wydłuża.</span>
+                                                    </div>
+                                                )}
+                                                
+                                                {aiError && (
+                                                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold text-center shadow-sm">
+                                                        {aiError}
+                                                    </div>
+                                                )}
+
+                                                {customImage && (
+                                                    <button onClick={() => setCustomImage(null)} className="w-full mt-2 text-xs font-bold text-red-500 hover:text-red-700 py-2.5 border border-red-100 rounded-xl hover:bg-red-50 transition-colors">
+                                                        Usuń wygenerowaną grafikę i wróć do motywów
+                                                    </button>
+                                                )}
+                                              </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-400 text-center font-medium leading-relaxed">System AI automatycznie usunie tło i dopasuje obrazek do wybranego "Stylu Grafiki" z panelu Podstawowego wyżej.</p>
+                                    </div>
+                                )}
+
+                                {activeTab === 'diploma' && (
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tytuł Dyplomu</label>
+                                            <input type="text" value={diplomaTitle} onChange={e => setDiplomaTitle(e.target.value)} className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-colors font-bold text-center" />
+                                            <TextFormatToolbar format={textFormats.title} onChange={(k, v) => updateFormat('title', k, v)} maxSize={150} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Podtytuł</label>
+                                            <input type="text" value={diplomaSubtitle} onChange={e => setDiplomaSubtitle(e.target.value)} className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-colors text-center" />
+                                            <TextFormatToolbar format={textFormats.subtitle} onChange={(k, v) => updateFormat('subtitle', k, v)} maxSize={80} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-indigo-500 uppercase ml-1">Imię i Nazwisko</label>
+                                            <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)} className="w-full mt-1 p-3.5 bg-indigo-50/30 border-2 border-indigo-100 rounded-xl font-bold text-xl outline-none focus:border-indigo-500 transition-colors text-center" />
+                                            <TextFormatToolbar format={textFormats.name} onChange={(k, v) => updateFormat('name', k, v)} maxSize={120} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Za co?</label>
+                                            <textarea value={diplomaReason} onChange={e => setDiplomaReason(e.target.value)} rows="3" className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm resize-none focus:border-indigo-400 focus:bg-white transition-colors" />
+                                            <TextFormatToolbar format={textFormats.reason} onChange={(k, v) => updateFormat('reason', k, v)} maxSize={60} />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 mt-4">
+                                            <div>
+                                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Miejscowość i Data</label>
+                                                <input type="text" value={diplomaDate} onChange={e => setDiplomaDate(e.target.value)} className="w-full mt-1 p-2.5 border border-gray-200 rounded-lg text-xs outline-none bg-gray-50" />
+                                            </div>
+                                            <div>
+                                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Podpis Nauczyciela</label>
+                                                <input type="text" value={diplomaSignature} onChange={e => setDiplomaSignature(e.target.value)} className="w-full mt-1 p-2.5 border border-gray-200 rounded-lg text-xs outline-none bg-gray-50" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeTab === 'garland' && (
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-indigo-500 uppercase ml-1">Tekst na proporczykach</label>
+                                            <input type="text" value={garlandText} onChange={e => setGarlandText(e.target.value.toUpperCase())} className="w-full mt-1 p-4 bg-indigo-50/30 border-2 border-indigo-100 rounded-xl font-black text-2xl text-center outline-none tracking-[0.5rem] focus:border-indigo-500 transition-colors" />
+                                            <p className="text-[10px] text-gray-400 text-center mt-2 italic">Aplikacja wygeneruje osobną stronę dla każdej litery do druku.</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeTab === 'themes' && (
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Wybierz Gotowy Motyw Kolorystyczny</label>
+                                            <div className="grid grid-cols-3 gap-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                                {THEMES.map(t => (
+                                                    <button key={t.id} onClick={() => {setSelectedThemeId(t.id); setCustomImage(null);}} className={`p-3 rounded-xl border-2 flex flex-col items-center transition-all duration-200 ${selectedThemeId === t.id ? 'border-indigo-500 bg-indigo-50 shadow-sm scale-[1.02]' : 'border-gray-100 hover:border-indigo-200 hover:bg-gray-50'}`}>
+                                                        <span className="text-2xl mb-1">{t.elements[0]}</span>
+                                                        <span className="text-[9px] truncate w-full text-center font-bold text-gray-700 leading-tight">{t.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeTab === 'sliders' && (
+                                    <div className="space-y-5 max-h-[450px] overflow-y-auto pr-3 custom-scrollbar">
+                                        
+                                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-3 block tracking-widest text-center">Kolory Czcionek (Dodatki)</label>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="flex flex-col items-center">
+                                                    <input type="color" value={diplomaTextColor} onChange={e => setDiplomaTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
+                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase text-center leading-tight">Data / Stopka</span>
+                                                </div>
+                                                <div className="flex flex-col items-center">
+                                                    <input type="color" value={garlandTextColor} onChange={e => setGarlandTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
+                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase">Girlanda</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/50">
+                                            <label className="text-[10px] font-bold text-indigo-800 uppercase mb-3 block tracking-widest text-center">Styl Obramowania</label>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                <button onClick={() => setBorderWidth(0)} className={`py-2 rounded-lg text-[9px] font-bold uppercase border transition-all ${borderWidth === 0 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>Brak</button>
+                                                <button onClick={() => {setBorderStyle('solid'); setBorderWidth(4);}} className={`py-2 rounded-lg text-[9px] font-bold uppercase border transition-all ${borderWidth === 4 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>Cienki</button>
+                                                <button onClick={() => {setBorderStyle('solid'); setBorderWidth(16);}} className={`py-2 rounded-lg text-[9px] font-bold uppercase border transition-all ${borderWidth === 16 && borderStyle === 'solid' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>Gruby</button>
+                                                <button onClick={() => {setBorderStyle('dashed'); setBorderWidth(16);}} className={`py-2 rounded-lg text-[9px] font-bold uppercase border transition-all ${borderStyle === 'dashed' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>Kreski</button>
+                                            </div>
+                                        </div>
+
+                                        <div className={`space-y-4 pt-2 ${previewMode === 'garland' ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                                            <div className="border-b border-gray-100 pb-2 mb-2"><span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Szyba Dyplomu</span></div>
+                                            <div>
+                                                <div className="flex justify-between text-[9px] font-bold text-gray-400 mb-1 uppercase"><span>Przezroczystość tła szyby</span><span>{boxOpacity}%</span></div>
+                                                <input type="range" min="0" max="100" value={boxOpacity} onChange={e => setBoxOpacity(Number(e.target.value))} className="w-full accent-indigo-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-[9px] font-bold text-gray-400 mb-1 uppercase"><span>Rozmiar szyby w %</span><span>{boxWidth}%</span></div>
+                                                <input type="range" min="50" max="100" value={boxWidth} onChange={e => setBoxWidth(Number(e.target.value))} className="w-full accent-indigo-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-[9px] font-bold text-gray-400 mb-1 uppercase"><span>Pozycja szyby góra/dół</span></div>
+                                                <input type="range" min="-300" max="300" value={boxOffset} onChange={e => setBoxOffset(Number(e.target.value))} className="w-full accent-indigo-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                                            </div>
+                                        </div>
+
+                                        <div className={`space-y-4 pt-2 ${previewMode === 'diploma' ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                                            <div className="border-b border-gray-100 pb-2 mb-2"><span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Wielkość Litery Girlandy</span></div>
+                                            <input type="range" min="50" max="400" value={garlandLetterSize} onChange={e => setGarlandLetterSize(Number(e.target.value))} className="w-full accent-indigo-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button onClick={() => window.print()} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm tracking-widest flex items-center justify-center space-x-3 shadow-xl shadow-indigo-200 transition-all active:scale-95 mt-auto">
+                                <Icon name="Printer" size={22} /><span>WYDRUKUJ PROJEKT</span>
+                            </button>
+                        </div>
+
+                        {/* Obszar Podglądu (Prawy Panel) */}
+                        <div className="lg:col-span-8 flex justify-center items-start lg:sticky lg:top-28 self-start print:static">
+                            {previewMode === 'diploma' ? (
+                                <div 
+                                    id="print-area"
+                                    className={`relative flex flex-col justify-between ${diplomaOrientation === 'horizontal' ? 'w-full aspect-[1.414]' : 'w-[85%] mx-auto aspect-[0.707]'} ${activeTheme.bg} rounded-[2.5rem] p-10 md:p-14 text-center shadow-2xl shadow-gray-200 transition-all duration-500 overflow-hidden bg-cover bg-center bg-no-repeat`}
+                                    style={{ 
+                                        borderWidth: `${borderWidth}px`,
+                                        borderStyle: borderStyle,
+                                        borderColor: activeTheme.borderHex,
+                                        color: diplomaTextColor
+                                    }}
+                                >
+                                    {/* Grafiki Tła (z Motywów) */}
+                                    {!customImage && (
+                                        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] flex items-center justify-center space-x-32 scale-150">
+                                            <div className="text-[15rem] drop-shadow-md">{activeTheme.elements[0]}</div>
+                                            <div className="text-[15rem] drop-shadow-md">{activeTheme.elements[1]}</div>
+                                        </div>
+                                    )}
+
+                                    {/* Ilustracja AI */}
+                                    {customImage && (
+                                        <div className="absolute inset-0 z-10 pointer-events-none">
+                                            {graphicLayout === 'full_background' ? (
+                                                <img src={customImage} className="w-full h-full object-cover opacity-100" />
+                                            ) : graphicLayout === 'bottom_corners' ? (
+                                                <>
+                                                    <img src={customImage} className="absolute bottom-[-1rem] left-[-2rem] w-80 h-80 object-contain rotate-6 drop-shadow-2xl" />
+                                                    <img src={customImage} className="absolute bottom-[-1rem] right-[-2rem] w-80 h-80 object-contain -rotate-12 drop-shadow-2xl" />
+                                                </>
+                                            ) : graphicLayout === 'bottom_center' ? (
+                                                <img src={customImage} className="absolute bottom-[-2rem] left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] object-contain drop-shadow-2xl" />
+                                            ) : null}
+                                        </div>
+                                    )}
+
+                                    {/* Znak wodny wersji darmowej */}
+                                    {!isPremium && <div className="absolute inset-0 z-50 flex items-center justify-center opacity-[0.04] rotate-[-35deg] text-6xl font-black uppercase pointer-events-none select-none tracking-[2rem]">EDUGENERATOR.PL</div>}
+
+                                    {/* Nagłówek Dyplomu */}
+                                    <div className="z-20 relative pt-2 flex-shrink-0 space-y-2">
+                                        <h1 style={{ 
+                                            fontSize: `${textFormats.title.size}px`, 
+                                            color: textFormats.title.color,
+                                            fontWeight: textFormats.title.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.title.italic ? 'italic' : 'normal'
+                                        }} className="tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full">{diplomaTitle}</h1>
+                                        
+                                        <h3 style={{ 
+                                            fontSize: `${textFormats.subtitle.size}px`, 
+                                            color: textFormats.subtitle.color,
+                                            fontWeight: textFormats.subtitle.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal'
+                                        }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full">{diplomaSubtitle}</h3>
+                                    </div>
+
+                                    {/* Szyba (Glassmorphism) - Elastyczna struktura zapobiegająca wychodzeniu tekstu */}
+                                    <div 
+                                        className="z-20 relative mx-auto flex flex-col items-center justify-center transition-all duration-300 py-6 px-8 md:py-10 md:px-14 rounded-[2rem] border border-white/40 shadow-xl my-auto flex-grow-0"
+                                        style={{ 
+                                            width: `${boxWidth}%`,
+                                            transform: `translateY(${boxOffset}px)`, 
+                                            backgroundColor: `rgba(255,255,255,${boxOpacity/100})`, 
+                                            backdropFilter: boxOpacity > 0 ? `blur(${(boxOpacity/100)*16}px)` : 'none',
+                                            WebkitBackdropFilter: boxOpacity > 0 ? `blur(${(boxOpacity/100)*16}px)` : 'none',
+                                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
+                                        }}
+                                    >
+                                        <h2 style={{ 
+                                            fontSize: `${textFormats.name.size}px`, 
+                                            color: textFormats.name.color,
+                                            fontWeight: textFormats.name.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.name.italic ? 'italic' : 'normal'
+                                        }} className="border-b-2 border-gray-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
+                                        
+                                        <p style={{ 
+                                            fontSize: `${textFormats.reason.size}px`, 
+                                            color: textFormats.reason.color,
+                                            fontWeight: textFormats.reason.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.reason.italic ? 'italic' : 'normal'
+                                        }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
+                                    </div>
+
+                                    {/* Stopka Dyplomu */}
+                                    <div className="z-20 relative flex justify-between items-end px-4 md:px-12 pb-2 flex-shrink-0 w-full select-none">
+                                        <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
+                                            <div className="font-bold text-lg mb-1" style={{ color: diplomaTextColor }}>{diplomaDate}</div>
+                                            <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Miejscowość i data</div>
+                                        </div>
+                                        
+                                        <div className="w-28 h-28 rounded-full border-4 border-red-500/40 flex items-center justify-center rotate-[-15deg] font-black text-[11px] p-2 bg-white/60 shadow-inner text-center z-30" style={{ color: '#ef4444', lineHeight: '1.2' }}>
+                                            <span className="drop-shadow-sm">PIECZĘĆ<br/>PLACÓWKI</span>
+                                        </div>
+                                        
+                                        <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
+                                            <div className="font-signature font-bold text-lg mb-1 opacity-90" style={{ color: diplomaTextColor }}>{diplomaSignature}</div>
+                                            <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Podpis Nauczyciela</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div id="print-area" className="grid grid-cols-1 gap-12 print:block w-full flex flex-col items-center overflow-visible mt-4">
+                                    {garlandText.split('').map((letter, idx) => (
+                                        <div key={idx} className="page-break relative aspect-[0.707] w-[80%] mx-auto flex items-center justify-center bg-transparent print:w-[210mm] print:h-[297mm]">
+                                            <div className="w-full h-full flex items-center justify-center relative">
+                                                {renderGarlandShape(letter)}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* MODAL Z INSTRUKCJĄ OBSŁUGI */}
+                    {showInstructions && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print-hidden">
+                            <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col font-sans">
+                                <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+                                    <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><Icon name="HelpCircle" className="text-indigo-600"/> Instrukcja Obsługi</h2>
+                                    <button onClick={() => setShowInstructions(false)} className="p-2 hover:bg-slate-200 rounded-xl transition-colors text-slate-500 hover:text-slate-800 font-bold text-lg">✕</button>
+                                </div>
+                                
+                                <div className="p-6 md:p-8 overflow-y-auto space-y-6 text-sm text-slate-600 custom-scrollbar bg-white">
+                                    <p className="text-base font-medium">Witaj w <strong>EduGeneratorze!</strong> To narzędzie stworzone po to, aby błyskawicznie tworzyć przepiękne, spersonalizowane dyplomy i girlandy na każdą szkolną lub przedszkolną okazję.</p>
+                                    
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 1: Podstawa (Wybór stylu)</h3>
+                                        <p>Zacznij od lewego panelu bocznego, w sekcji <strong>Podstawa</strong>. Zdecyduj dla kogo tworzysz (np. Żłobek, Przedszkole), wybierz styl grafiki, określ gdzie na stronie mają być obrazki oraz dobierz ulubioną czcionkę.</p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 2: Wprowadzanie Tekstu</h3>
+                                        <ul className="list-disc pl-5 space-y-2">
+                                            <li>Wybierz zakładkę <strong>Dyplom</strong> lub <strong>Girlanda</strong>.</li>
+                                            <li><strong>Dyplom:</strong> Wypełnij tytuł, imię ucznia i powód nagrody. <br/>✨ <em>Pod każdym polem znajdziesz pasek formatowania! Możesz tam pogrubić tekst, zmienić rozmiar i kolor.</em></li>
+                                            <li><strong>Girlanda:</strong> Wpisz słowo, które chcesz wydrukować. System wygeneruje jedną literę na każdej stronie A4.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 3: Wybór Grafiki</h3>
+                                        <ul className="list-disc pl-5 space-y-2">
+                                            <li><strong>Błyskawicznie:</strong> Zakładka <em>Motywy</em> – kliknij w gotowy motyw (np. Kosmos, Wiosna), a system sam dobierze odpowiednie kolory i tła.</li>
+                                            <li><strong>Grafika AI (Premium):</strong> Zakładka <em>Grafika AI</em> – wpisz co chcesz zobaczyć (np. "uśmiechnięty kot"). Magia AI wygeneruje obrazek i usunie mu tło! <em>(Wymaga kodu dostępu)</em>.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 4: Szlify</h3>
+                                        <p>W zakładce <strong>Szlify</strong> znajdziesz zaawansowane opcje. Możesz zmienić styl ramek, kolory girlandy oraz dostosować "Szybę Dyplomu" (rozmyte tło pod tekstem), tak aby tekst był idealnie czytelny.</p>
+                                    </div>
+
+                                    <div className="space-y-3 bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
+                                        <h3 className="font-black text-indigo-900 text-lg flex items-center gap-2"><Icon name="Printer" size={20}/> Krok 5: Druk lub zapis do PDF</h3>
+                                        <p className="text-indigo-800">Gdy projekt po prawej stronie wygląda świetnie, zjedź na dół lewego panelu i kliknij <strong>WYDRUKUJ PROJEKT</strong>.</p>
+                                        <ul className="list-disc pl-5 text-indigo-700 font-medium space-y-1">
+                                            <li>Aby wydrukować: Wybierz swoją drukarkę.</li>
+                                            <li>Aby zapisać na dysku: W oknie drukowania wybierz opcję <strong>"Zapisz jako PDF"</strong>.</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="text-center pt-2">
+                                        <button onClick={() => setShowInstructions(false)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 transition-all active:scale-95 text-base tracking-wide w-full sm:w-auto">
+                                            Zrozumiałem, do dzieła!
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGenerator - Dyplomy i Girlandy</title>
+    <!-- Biblioteki -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Balsamiq+Sans:wght@400;700&family=Caveat:wght@400..700&family=Cinzel:wght@400..900&family=Dancing+Script:wght@400..700&family=Lobster&family=Lora:ital,wght@0,400..700;1,400..700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@400;700&family=Roboto:wght@400;700&family=Satisfy&display=swap');
+        
+        body { background-color: #f8fafc; }
+        .font-sans { font-family: 'Montserrat', sans-serif; }
+        .font-balsamiq { font-family: 'Balsamiq Sans', cursive; }
+        .font-pacifico { font-family: 'Pacifico', cursive; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .font-caveat { font-family: 'Caveat', cursive; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-dancing { font-family: 'Dancing Script', cursive; }
+        .font-patrick { font-family: 'Patrick Hand', cursive; }
+        .font-amatic { font-family: 'Amatic SC', cursive; }
+        .font-lobster { font-family: 'Lobster', cursive; }
+        .font-lora { font-family: 'Lora', serif; }
+        .font-oswald { font-family: 'Oswald', sans-serif; }
+        .font-quicksand { font-family: 'Quicksand', sans-serif; }
+        .font-roboto { font-family: 'Roboto', sans-serif; }
+        .font-satisfy { font-family: 'Satisfy', cursive; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; border: none !important; margin: 0 !important; }
+            .print-hidden { display: none !important; }
+            .page-break { page-break-after: always; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; visibility: visible !important; }
+            body, html { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- IKONY SVG ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                Printer: <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>,
+                Coffee: <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM7 2v3M11 2v3M15 2v3"/>,
+                Award: (<><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526M20 7a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/><circle cx="12" cy="7" r="3"/></>),
+                Type: (<><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></>),
+                Palette: (<><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.688-1.688h1.906c3.11 0 5.625-2.515 5.625-5.625 0-4.75-4.477-8.75-10-8.75z"/></>),
+                Wand2: <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.21 1.21 0 0 0 1.72 0L21.64 5.36a1.21 1.21 0 0 0 0-1.72ZM14 7l3 3M5 6v1M19 2v1M10 2v2M7 10H6M22 9h-2M15 2h1"/>,
+                Sliders: (<><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="18" y1="16" x2="22" y2="16"/></>),
+                Key: <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3y-3.5L15.5 7.5z"/>,
+                Settings: <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>,
+                Lock: (<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>),
+                HelpCircle: (<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>)
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || null}
+                </svg>
+            );
+        };
+
+        const THEMES = [
+          { id: 'watercolor', name: 'Akwarelowy Sen', bg: 'bg-white', borderHex: '#818cf8', elements: ['☁️', '✨'] },
+          { id: 'boho', name: 'Styl Boho', bg: 'bg-[#FAF9F6]', borderHex: '#D4B895', elements: ['🌿', '☀️'] },
+          { id: 'rodzina', name: 'Dzień Rodziny', bg: 'bg-rose-50', borderHex: '#f43f5e', elements: ['❤️', '🏡'] },
+          { id: 'autyzm', name: 'Dzień Autyzmu', bg: 'bg-blue-50', borderHex: '#3b82f6', elements: ['💙', '🧩'] },
+          { id: 'skarpetka', name: 'Dzień Skarpetki', bg: 'bg-fuchsia-50', borderHex: '#fb923c', elements: ['🧦', '🌈'] },
+          { id: 'pasowanie', name: 'Pasowanie', bg: 'bg-indigo-50', borderHex: '#6366f1', elements: ['🎒', '🖍️'] },
+          { id: 'zakonczenie', name: 'Zakończenie Roku', bg: 'bg-yellow-50', borderHex: '#eab308', elements: ['🎓', '🌻'] },
+          { id: 'przedszkolak', name: 'Dzień Przedszkolaka', bg: 'bg-yellow-100', borderHex: '#f87171', elements: ['🎈', '🧸'] },
+          { id: 'dziecko', name: 'Dzień Dziecka', bg: 'bg-green-50', borderHex: '#4ade80', elements: ['🍭', '🎠'] },
+          { id: 'nauczyciel', name: 'Dzień Nauczyciela', bg: 'bg-indigo-50', borderHex: '#6366f1', elements: ['🦉', '✏️'] },
+          { id: 'space', name: 'Kosmos', bg: 'bg-indigo-900', borderHex: '#818cf8', elements: ['🚀', '⭐'] },
+          { id: 'wiosna', name: 'Pani Wiosna', bg: 'bg-pink-50', borderHex: '#f472b6', elements: ['🌸', '🦋'] },
+          { id: 'zima', name: 'Pani Zima', bg: 'bg-sky-50', borderHex: '#7dd3fc', elements: ['❄️', '⛄'] },
+          { id: 'jesien', name: 'Pani Jesień', bg: 'bg-orange-50', borderHex: '#ea580c', elements: ['🍁', '🍄'] },
+          { id: 'lato', name: 'Powitanie Lata', bg: 'bg-yellow-50', borderHex: '#facc15', elements: ['☀️', '🏖️'] }
+        ];
+
+        // --- FUNKCJA PRZEZROCZYSTEGO TŁA ---
+        const makeWhiteTransparent = (imageSrc) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                if (!imageSrc.startsWith('blob:')) {
+                    img.crossOrigin = 'Anonymous';
+                }
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const data = imageData.data;
+                        for (let i = 0; i < data.length; i += 4) {
+                            if (data[i] > 240 && data[i+1] > 240 && data[i+2] > 240) {
+                                data[i+3] = 0; 
+                            } else if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
+                                data[i+3] = 100; 
+                            }
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch(e) {
+                        console.warn("Błąd usuwania tła (CORS zabezpieczenia):", e);
+                        resolve(imageSrc); // Zwraca oryginał, jeśli przeglądarka zablokuje płótno
+                    }
+                };
+                img.onerror = () => resolve(imageSrc);
+                img.src = imageSrc;
+            });
+        };
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('diploma');
+            const [previewMode, setPreviewMode] = useState('diploma');
+            const [isPremium, setIsPremium] = useState(false);
+            const [accessCode, setAccessCode] = useState('');
+            const [showInstructions, setShowInstructions] = useState(false);
+            
+            // Dane Dyplomu
+            const [diplomaTitle, setDiplomaTitle] = useState('DYPLOM');
+            const [diplomaSubtitle, setDiplomaSubtitle] = useState('ZA WYBITNE OSIĄGNIĘCIA');
+            const [studentName, setStudentName] = useState('Jan Kowalski');
+            const [diplomaReason, setDiplomaReason] = useState('za udział w konkursie plastycznym "Wiosna w przedszkolu" i przygotowanie najpiękniejszej pracy.');
+            const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 31 Marca 2026');
+            const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
+            
+            // Formatowanie Tekstu 
+            const [textFormats, setTextFormats] = useState({
+                title: { size: 64, bold: true, italic: false, color: '#1e293b' },
+                subtitle: { size: 24, bold: true, italic: false, color: '#1e293b' },
+                name: { size: 60, bold: true, italic: false, color: '#1e293b' },
+                reason: { size: 22, bold: true, italic: false, color: '#1e293b' }
+            });
+
+            const updateFormat = (field, key, value) => {
+                setTextFormats(prev => ({ ...prev, [field]: { ...prev[field], [key]: value } }));
+            };
+
+            const TextFormatToolbar = ({ format, onChange, maxSize = 120 }) => (
+                <div className="flex items-center gap-2 mt-2 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+                    <button onClick={() => onChange('bold', !format.bold)} className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-serif transition-colors ${format.bold ? 'bg-indigo-100 text-indigo-700 shadow-inner' : 'hover:bg-gray-100 text-gray-600'}`}><b>B</b></button>
+                    <button onClick={() => onChange('italic', !format.italic)} className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-serif transition-colors ${format.italic ? 'bg-indigo-100 text-indigo-700 shadow-inner' : 'hover:bg-gray-100 text-gray-600'}`}><i>I</i></button>
+                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                    <input type="color" value={format.color} onChange={e => onChange('color', e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer border border-gray-200 p-0.5 shadow-sm" />
+                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                    <Icon name="Type" size={16} className="text-gray-400" />
+                    <input type="range" min="10" max={maxSize} value={format.size} onChange={e => onChange('size', Number(e.target.value))} className="flex-1 accent-indigo-600 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                    <span className="text-xs font-bold text-gray-500 w-8 text-right">{format.size}px</span>
+                </div>
+            );
+
+            // Rozmiary i Slidery Ogólne
+            const [boxWidth, setBoxWidth] = useState(85); 
+            const [boxOpacity, setBoxOpacity] = useState(90); 
+            const [boxOffset, setBoxOffset] = useState(0);
+
+            // Girlanda
+            const [garlandLetterSize, setGarlandLetterSize] = useState(180); 
+            const [garlandLetterOffset, setGarlandLetterOffset] = useState(50); 
+            const [garlandText, setGarlandText] = useState('WITAJCIE');
+            const [garlandShape, setGarlandShape] = useState('triangle'); 
+
+            // Wygląd i Kolory
+            const [diplomaTextColor, setDiplomaTextColor] = useState('#1e293b');
+            const [garlandTextColor, setGarlandTextColor] = useState('#6366f1');
+            const [borderStyle, setBorderStyle] = useState('solid'); 
+            const [borderWidth, setBorderWidth] = useState(12);
+            const [selectedThemeId, setSelectedThemeId] = useState('pasowanie');
+            const [selectedFont, setSelectedFont] = useState('font-sans');
+            const [artStyle, setArtStyle] = useState('watercolor'); 
+            const [graphicLayout, setGraphicLayout] = useState('bottom_corners'); 
+            const [diplomaOrientation, setDiplomaOrientation] = useState('horizontal');
+            const [ageGroup, setAgeGroup] = useState('przedszkole');
+
+            // AI i Obrazy
+            const [aiPrompt, setAiPrompt] = useState('');
+            const [customImage, setCustomImage] = useState(null);
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [isTakingLong, setIsTakingLong] = useState(false);
+            const [aiError, setAiError] = useState(null); // Zmiana na null, by przyjmować JSX
 
             const activeTheme = THEMES.find(t => t.id === selectedThemeId) || THEMES[0];
 
