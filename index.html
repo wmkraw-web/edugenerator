@@ -127,8 +127,7 @@
             // Dane Dyplomu
             const [diplomaTitle, setDiplomaTitle] = useState('DYPLOM');
             const [diplomaSubtitle, setDiplomaSubtitle] = useState('ZA WYBITNE OSIĄGNIĘCIA');
-            // Zmieniono domyślną wartość, by pokazać, że można wpisać kilka osób
-            const [studentName, setStudentName] = useState('Jan Kowalski\nAnna Nowak'); 
+            const [studentName, setStudentName] = useState('Jan Kowalski');
             const [diplomaReason, setDiplomaReason] = useState('za udział w konkursie plastycznym "Wiosna w przedszkolu" i przygotowanie najpiękniejszej pracy.');
             const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 31 Marca 2026');
             const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
@@ -172,7 +171,6 @@
             // Wygląd i Kolory
             const [diplomaTextColor, setDiplomaTextColor] = useState('#1e293b');
             const [garlandTextColor, setGarlandTextColor] = useState('#6366f1');
-            const [diplomaBorderColor, setDiplomaBorderColor] = useState('#6366f1'); // NOWOŚĆ: Zmienna do koloru ramki
             const [borderStyle, setBorderStyle] = useState('solid'); 
             const [borderWidth, setBorderWidth] = useState(12);
             const [selectedThemeId, setSelectedThemeId] = useState('pasowanie');
@@ -191,7 +189,6 @@
 
             useEffect(() => {
                 setGarlandTextColor(activeTheme.borderHex);
-                setDiplomaBorderColor(activeTheme.borderHex); // Przy zmianie motywu dopasuj od razu ramkę
             }, [selectedThemeId]);
 
             const handleVerifyCode = () => {
@@ -235,28 +232,37 @@
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
                     
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+                    // Usunięto wadliwy model=flux, wracamy do domyślnego i super stabilnego modelu AI
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                    
+                    // Bezpieczne pobieranie pliku (eliminuje błędy blokowania przez przeglądarkę)
+                    const response = await fetch(imageUrl);
+                    if (!response.ok) {
+                        throw new Error("Serwer AI odrzucił zapytanie z powodu obciążenia.");
+                    }
+                    
+                    const blob = await response.blob();
+                    const objectUrl = URL.createObjectURL(blob);
                     
                     const img = new Image();
-                    img.crossOrigin = "Anonymous";
                     img.onload = async () => {
                         if (graphicLayout === 'full_background') {
-                            setCustomImage(imageUrl);
+                            setCustomImage(objectUrl);
                         } else {
-                            const transparentImg = await makeWhiteTransparent(imageUrl);
+                            const transparentImg = await makeWhiteTransparent(objectUrl);
                             setCustomImage(transparentImg);
                         }
                         setIsGenerating(false);
                     };
                     img.onerror = () => {
-                        alert("Wystąpił problem z wygenerowaniem obrazka. Serwer AI może być obciążony, spróbuj ponownie.");
+                        alert("Wystąpił problem z przetworzeniem obrazka w przeglądarce. Spróbuj ponownie.");
                         setIsGenerating(false);
                     };
-                    img.src = imageUrl;
+                    img.src = objectUrl;
 
                 } catch (e) { 
                     console.error(e);
-                    alert(`Problem z generowaniem AI: ${e.message}`);
+                    alert(`Problem z serwerem AI. Proszę spróbować za chwilę!`);
                     setIsGenerating(false);
                 }
             };
@@ -302,16 +308,6 @@
                         </div>
                     </div>
                 );
-            };
-
-            // FUNKCJA DLA TRYBU WIELU OSÓB
-            const nameList = studentName.split('\n').map(n => n.trim()).filter(n => n !== '');
-            if (nameList.length === 0) nameList.push('Imię i Nazwisko'); // Zabezpieczenie przed pustym dyplomem
-            
-            const getDiplomaWord = (count) => {
-                if (count === 1) return 'DYPLOM';
-                if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'DYPLOMY';
-                return 'DYPLOMÓW';
             };
 
             return (
@@ -478,26 +474,11 @@
                                             <input type="text" value={diplomaSubtitle} onChange={e => setDiplomaSubtitle(e.target.value)} className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-colors text-center" />
                                             <TextFormatToolbar format={textFormats.subtitle} onChange={(k, v) => updateFormat('subtitle', k, v)} maxSize={80} />
                                         </div>
-                                        
-                                        {/* TRYB SERYJNY (WIELE OSÓB) */}
-                                        <div className="border-2 border-indigo-50 bg-indigo-50/20 p-3 rounded-2xl">
-                                            <div className="flex justify-between items-end mb-1 px-1">
-                                                <label className="text-[10px] font-bold text-indigo-600 uppercase">Imię i Nazwisko (Lista Osób)</label>
-                                                <span className="text-[9px] text-white font-bold bg-indigo-500 px-2 py-0.5 rounded shadow-sm">
-                                                    GENERUJESZ: {nameList.length} {getDiplomaWord(nameList.length)}
-                                                </span>
-                                            </div>
-                                            <textarea 
-                                                value={studentName} 
-                                                onChange={e => setStudentName(e.target.value)} 
-                                                rows="3" 
-                                                placeholder="Jan Kowalski&#10;Anna Nowak" 
-                                                className="w-full mt-1 p-3.5 bg-white border border-indigo-100 rounded-xl font-bold text-xl outline-none focus:border-indigo-400 transition-colors text-center resize-y leading-tight" 
-                                            />
+                                        <div>
+                                            <label className="text-[10px] font-bold text-indigo-500 uppercase ml-1">Imię i Nazwisko</label>
+                                            <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)} className="w-full mt-1 p-3.5 bg-indigo-50/30 border-2 border-indigo-100 rounded-xl font-bold text-xl outline-none focus:border-indigo-500 transition-colors text-center" />
                                             <TextFormatToolbar format={textFormats.name} onChange={(k, v) => updateFormat('name', k, v)} maxSize={120} />
-                                            <p className="text-[10px] text-indigo-400 text-center mt-2 font-medium">Aby wydrukować dyplomy dla całej grupy, wklej tu ich imiona <b>(każda osoba w nowej linii)</b>. Na ekranie zobaczysz tylko pierwszą osobę, ale po kliknięciu 'Wydrukuj', wygeneruje się komplet dyplomów!</p>
                                         </div>
-
                                         <div>
                                             <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Za co?</label>
                                             <textarea value={diplomaReason} onChange={e => setDiplomaReason(e.target.value)} rows="3" className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm resize-none focus:border-indigo-400 focus:bg-white transition-colors" />
@@ -542,21 +523,16 @@
                                 {activeTab === 'sliders' && (
                                     <div className="space-y-5 max-h-[450px] overflow-y-auto pr-3 custom-scrollbar">
                                         
-                                        {/* KOLORY Z NOWĄ RAMKĄ */}
                                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-3 block tracking-widest text-center">Kolory (Tekst i Ramki)</label>
-                                            <div className="grid grid-cols-3 gap-2">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-3 block tracking-widest text-center">Kolory Czcionek (Dodatki)</label>
+                                            <div className="grid grid-cols-2 gap-4">
                                                 <div className="flex flex-col items-center">
                                                     <input type="color" value={diplomaTextColor} onChange={e => setDiplomaTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
-                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase text-center leading-tight">Tekst<br/>Dodatkowy</span>
+                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase text-center leading-tight">Data / Stopka</span>
                                                 </div>
                                                 <div className="flex flex-col items-center">
                                                     <input type="color" value={garlandTextColor} onChange={e => setGarlandTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
-                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase text-center leading-tight">Tekst<br/>Girlandy</span>
-                                                </div>
-                                                <div className="flex flex-col items-center">
-                                                    <input type="color" value={diplomaBorderColor} onChange={e => setDiplomaBorderColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
-                                                    <span className="text-[9px] mt-1 font-bold text-indigo-500 uppercase text-center leading-tight">Kolor<br/>Ramki</span>
+                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase">Girlanda</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -603,104 +579,103 @@
                         {/* Obszar Podglądu (Prawy Panel) */}
                         <div className="lg:col-span-8 flex justify-center items-start lg:sticky lg:top-28 self-start print:static">
                             {previewMode === 'diploma' ? (
-                                <div id="print-area" className="w-full flex flex-col items-center print:block">
-                                    {nameList.map((name, idx) => (
-                                        <div key={idx} className={`page-break relative w-full flex items-center justify-center bg-transparent ${idx > 0 ? 'hidden print:flex' : 'flex'}`}>
-                                            <div 
-                                                className={`relative flex flex-col justify-between ${diplomaOrientation === 'horizontal' ? 'w-full aspect-[1.414]' : 'w-[85%] mx-auto aspect-[0.707]'} ${activeTheme.bg} rounded-[2.5rem] p-10 md:p-14 text-center shadow-2xl shadow-gray-200 transition-all duration-500 overflow-hidden bg-cover bg-center bg-no-repeat`}
-                                                style={{ 
-                                                    borderWidth: `${borderWidth}px`,
-                                                    borderStyle: borderStyle,
-                                                    borderColor: diplomaBorderColor,
-                                                    color: diplomaTextColor
-                                                }}
-                                            >
-                                                {/* Grafiki Tła (z Motywów) */}
-                                                {!customImage && (
-                                                    <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] flex items-center justify-center space-x-32 scale-150">
-                                                        <div className="text-[15rem] drop-shadow-md">{activeTheme.elements[0]}</div>
-                                                        <div className="text-[15rem] drop-shadow-md">{activeTheme.elements[1]}</div>
-                                                    </div>
-                                                )}
-
-                                                {/* Ilustracja AI */}
-                                                {customImage && (
-                                                    <div className="absolute inset-0 z-10 pointer-events-none">
-                                                        {graphicLayout === 'full_background' ? (
-                                                            <img src={customImage} className="w-full h-full object-cover opacity-100" />
-                                                        ) : graphicLayout === 'bottom_corners' ? (
-                                                            <>
-                                                                <img src={customImage} className="absolute bottom-[-1rem] left-[-2rem] w-80 h-80 object-contain rotate-6 drop-shadow-2xl" />
-                                                                <img src={customImage} className="absolute bottom-[-1rem] right-[-2rem] w-80 h-80 object-contain -rotate-12 drop-shadow-2xl" />
-                                                            </>
-                                                        ) : graphicLayout === 'bottom_center' ? (
-                                                            <img src={customImage} className="absolute bottom-[-2rem] left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] object-contain drop-shadow-2xl" />
-                                                        ) : null}
-                                                    </div>
-                                                )}
-
-                                                {/* Znak wodny wersji darmowej */}
-                                                {!isPremium && <div className="absolute inset-0 z-50 flex items-center justify-center opacity-[0.04] rotate-[-35deg] text-6xl font-black uppercase pointer-events-none select-none tracking-[2rem]">EDUGENERATOR.PL</div>}
-
-                                                {/* Nagłówek Dyplomu */}
-                                                <div className="z-20 relative pt-2 flex-shrink-0 space-y-2">
-                                                    <h1 style={{ 
-                                                        fontSize: `${textFormats.title.size}px`, 
-                                                        color: textFormats.title.color,
-                                                        fontWeight: textFormats.title.bold ? 'bold' : 'normal',
-                                                        fontStyle: textFormats.title.italic ? 'italic' : 'normal'
-                                                    }} className="tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full">{diplomaTitle}</h1>
-                                                    
-                                                    <h3 style={{ 
-                                                        fontSize: `${textFormats.subtitle.size}px`, 
-                                                        color: textFormats.subtitle.color,
-                                                        fontWeight: textFormats.subtitle.bold ? 'bold' : 'normal',
-                                                        fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal'
-                                                    }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full">{diplomaSubtitle}</h3>
-                                                </div>
-
-                                                {/* Szyba (Glassmorphism) - Elastyczna struktura zapobiegająca wychodzeniu tekstu */}
-                                                <div 
-                                                    className="z-20 relative mx-auto flex flex-col items-center justify-center transition-all duration-300 py-6 px-8 md:py-10 md:px-14 rounded-[2rem] border border-white/40 shadow-xl my-auto flex-grow-0"
-                                                    style={{ 
-                                                        width: `${boxWidth}%`,
-                                                        transform: `translateY(${boxOffset}px)`, 
-                                                        backgroundColor: `rgba(255,255,255,${boxOpacity/100})`, 
-                                                        backdropFilter: boxOpacity > 0 ? `blur(${(boxOpacity/100)*16}px)` : 'none',
-                                                        WebkitBackdropFilter: boxOpacity > 0 ? `blur(${(boxOpacity/100)*16}px)` : 'none',
-                                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
-                                                    }}
-                                                >
-                                                    <h2 style={{ 
-                                                        fontSize: `${textFormats.name.size}px`, 
-                                                        color: textFormats.name.color,
-                                                        fontWeight: textFormats.name.bold ? 'bold' : 'normal',
-                                                        fontStyle: textFormats.name.italic ? 'italic' : 'normal'
-                                                    }} className="border-b-2 border-gray-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{name}</h2>
-                                                    
-                                                    <p style={{ 
-                                                        fontSize: `${textFormats.reason.size}px`, 
-                                                        color: textFormats.reason.color,
-                                                        fontWeight: textFormats.reason.bold ? 'bold' : 'normal',
-                                                        fontStyle: textFormats.reason.italic ? 'italic' : 'normal'
-                                                    }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
-                                                </div>
-
-                                                {/* Stopka Dyplomu - Usunięto okrągłą pieczęć */}
-                                                <div className="z-20 relative flex justify-between items-end px-4 md:px-16 pb-2 flex-shrink-0 w-full select-none">
-                                                    <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
-                                                        <div className="font-bold text-lg mb-1" style={{ color: diplomaTextColor }}>{diplomaDate}</div>
-                                                        <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Miejscowość i data</div>
-                                                    </div>
-                                                    
-                                                    <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
-                                                        <div className="font-signature font-bold text-lg mb-1 opacity-90" style={{ color: diplomaTextColor }}>{diplomaSignature}</div>
-                                                        <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Podpis Nauczyciela</div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                <div 
+                                    id="print-area"
+                                    className={`relative flex flex-col justify-between ${diplomaOrientation === 'horizontal' ? 'w-full aspect-[1.414]' : 'w-[85%] mx-auto aspect-[0.707]'} ${activeTheme.bg} rounded-[2.5rem] p-10 md:p-14 text-center shadow-2xl shadow-gray-200 transition-all duration-500 overflow-hidden bg-cover bg-center bg-no-repeat`}
+                                    style={{ 
+                                        borderWidth: `${borderWidth}px`,
+                                        borderStyle: borderStyle,
+                                        borderColor: activeTheme.borderHex,
+                                        color: diplomaTextColor
+                                    }}
+                                >
+                                    {/* Grafiki Tła (z Motywów) */}
+                                    {!customImage && (
+                                        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] flex items-center justify-center space-x-32 scale-150">
+                                            <div className="text-[15rem] drop-shadow-md">{activeTheme.elements[0]}</div>
+                                            <div className="text-[15rem] drop-shadow-md">{activeTheme.elements[1]}</div>
                                         </div>
-                                    ))}
+                                    )}
+
+                                    {/* Ilustracja AI */}
+                                    {customImage && (
+                                        <div className="absolute inset-0 z-10 pointer-events-none">
+                                            {graphicLayout === 'full_background' ? (
+                                                <img src={customImage} className="w-full h-full object-cover opacity-100" />
+                                            ) : graphicLayout === 'bottom_corners' ? (
+                                                <>
+                                                    <img src={customImage} className="absolute bottom-[-1rem] left-[-2rem] w-80 h-80 object-contain rotate-6 drop-shadow-2xl" />
+                                                    <img src={customImage} className="absolute bottom-[-1rem] right-[-2rem] w-80 h-80 object-contain -rotate-12 drop-shadow-2xl" />
+                                                </>
+                                            ) : graphicLayout === 'bottom_center' ? (
+                                                <img src={customImage} className="absolute bottom-[-2rem] left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] object-contain drop-shadow-2xl" />
+                                            ) : null}
+                                        </div>
+                                    )}
+
+                                    {/* Znak wodny wersji darmowej */}
+                                    {!isPremium && <div className="absolute inset-0 z-50 flex items-center justify-center opacity-[0.04] rotate-[-35deg] text-6xl font-black uppercase pointer-events-none select-none tracking-[2rem]">EDUGENERATOR.PL</div>}
+
+                                    {/* Nagłówek Dyplomu */}
+                                    <div className="z-20 relative pt-2 flex-shrink-0 space-y-2">
+                                        <h1 style={{ 
+                                            fontSize: `${textFormats.title.size}px`, 
+                                            color: textFormats.title.color,
+                                            fontWeight: textFormats.title.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.title.italic ? 'italic' : 'normal'
+                                        }} className="tracking-[0.25em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full">{diplomaTitle}</h1>
+                                        
+                                        <h3 style={{ 
+                                            fontSize: `${textFormats.subtitle.size}px`, 
+                                            color: textFormats.subtitle.color,
+                                            fontWeight: textFormats.subtitle.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal'
+                                        }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full">{diplomaSubtitle}</h3>
+                                    </div>
+
+                                    {/* Szyba (Glassmorphism) - Elastyczna struktura zapobiegająca wychodzeniu tekstu */}
+                                    <div 
+                                        className="z-20 relative mx-auto flex flex-col items-center justify-center transition-all duration-300 py-6 px-8 md:py-10 md:px-14 rounded-[2rem] border border-white/40 shadow-xl my-auto flex-grow-0"
+                                        style={{ 
+                                            width: `${boxWidth}%`,
+                                            transform: `translateY(${boxOffset}px)`, 
+                                            backgroundColor: `rgba(255,255,255,${boxOpacity/100})`, 
+                                            backdropFilter: boxOpacity > 0 ? `blur(${(boxOpacity/100)*16}px)` : 'none',
+                                            WebkitBackdropFilter: boxOpacity > 0 ? `blur(${(boxOpacity/100)*16}px)` : 'none',
+                                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
+                                        }}
+                                    >
+                                        <h2 style={{ 
+                                            fontSize: `${textFormats.name.size}px`, 
+                                            color: textFormats.name.color,
+                                            fontWeight: textFormats.name.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.name.italic ? 'italic' : 'normal'
+                                        }} className="border-b-2 border-gray-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
+                                        
+                                        <p style={{ 
+                                            fontSize: `${textFormats.reason.size}px`, 
+                                            color: textFormats.reason.color,
+                                            fontWeight: textFormats.reason.bold ? 'bold' : 'normal',
+                                            fontStyle: textFormats.reason.italic ? 'italic' : 'normal'
+                                        }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
+                                    </div>
+
+                                    {/* Stopka Dyplomu */}
+                                    <div className="z-20 relative flex justify-between items-end px-4 md:px-12 pb-2 flex-shrink-0 w-full select-none">
+                                        <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
+                                            <div className="font-bold text-lg mb-1" style={{ color: diplomaTextColor }}>{diplomaDate}</div>
+                                            <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Miejscowość i data</div>
+                                        </div>
+                                        
+                                        <div className="w-28 h-28 rounded-full border-4 border-red-500/40 flex items-center justify-center rotate-[-15deg] font-black text-[11px] p-2 bg-white/60 shadow-inner text-center z-30" style={{ color: '#ef4444', lineHeight: '1.2' }}>
+                                            <span className="drop-shadow-sm">PIECZĘĆ<br/>PLACÓWKI</span>
+                                        </div>
+                                        
+                                        <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
+                                            <div className="font-signature font-bold text-lg mb-1 opacity-90" style={{ color: diplomaTextColor }}>{diplomaSignature}</div>
+                                            <div className="text-[9px] font-black uppercase opacity-50 tracking-wider" style={{ color: diplomaTextColor }}>Podpis Nauczyciela</div>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <div id="print-area" className="grid grid-cols-1 gap-12 print:block w-full flex flex-col items-center overflow-visible mt-4">
@@ -737,7 +712,7 @@
                                         <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 2: Wprowadzanie Tekstu</h3>
                                         <ul className="list-disc pl-5 space-y-2">
                                             <li>Wybierz zakładkę <strong>Dyplom</strong> lub <strong>Girlanda</strong>.</li>
-                                            <li><strong>Dyplom:</strong> Wypełnij tytuł i powód nagrody. W polu "Imię i Nazwisko" możesz wkleić całą listę osób z grupy (każde nazwisko w nowej linii) - aplikacja wygeneruje dla nich osobne dyplomy za jednym kliknięciem!<br/>✨ <em>Pod każdym polem znajdziesz pasek formatowania! Możesz tam pogrubić tekst, zmienić rozmiar i kolor.</em></li>
+                                            <li><strong>Dyplom:</strong> Wypełnij tytuł, imię ucznia i powód nagrody. <br/>✨ <em>Pod każdym polem znajdziesz pasek formatowania! Możesz tam pogrubić tekst, zmienić rozmiar i kolor.</em></li>
                                             <li><strong>Girlanda:</strong> Wpisz słowo, które chcesz wydrukować. System wygeneruje jedną literę na każdej stronie A4.</li>
                                         </ul>
                                     </div>
@@ -752,7 +727,7 @@
 
                                     <div className="space-y-3">
                                         <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 4: Szlify</h3>
-                                        <p>W zakładce <strong>Szlify</strong> znajdziesz zaawansowane opcje. Możesz zmienić kolor, a także styl ramek, kolory girlandy oraz dostosować "Szybę Dyplomu" (rozmyte tło pod tekstem), tak aby tekst był idealnie czytelny.</p>
+                                        <p>W zakładce <strong>Szlify</strong> znajdziesz zaawansowane opcje. Możesz zmienić styl ramek, kolory girlandy oraz dostosować "Szybę Dyplomu" (rozmyte tło pod tekstem), tak aby tekst był idealnie czytelny.</p>
                                     </div>
 
                                     <div className="space-y-3 bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
