@@ -132,6 +132,7 @@
             const [accessCode, setAccessCode] = useState('');
             const [showInstructions, setShowInstructions] = useState(false);
             
+            // Dane Dyplomu
             const [diplomaTitle, setDiplomaTitle] = useState('DYPLOM');
             const [diplomaSubtitle, setDiplomaSubtitle] = useState('ZA WYBITNE OSIĄGNIĘCIA');
             const [studentName, setStudentName] = useState('Jan Kowalski');
@@ -139,6 +140,7 @@
             const [diplomaDate, setDiplomaDate] = useState('Leżajsk, 31 Marca 2026');
             const [diplomaSignature, setDiplomaSignature] = useState('Wychowawca');
             
+            // Formatowanie Tekstu 
             const [textFormats, setTextFormats] = useState({
                 title: { size: 64, bold: true, italic: false, color: '#1e293b' },
                 subtitle: { size: 24, bold: true, italic: false, color: '#1e293b' },
@@ -163,6 +165,7 @@
                 </div>
             );
 
+            // Rozmiary i Slidery
             const [boxWidth, setBoxWidth] = useState(85); 
             const [boxOpacity, setBoxOpacity] = useState(90); 
             const [boxOffset, setBoxOffset] = useState(0);
@@ -170,6 +173,7 @@
             const [garlandLetterOffset, setGarlandLetterOffset] = useState(50); 
             const [garlandText, setGarlandText] = useState('WITAJCIE');
 
+            // Wygląd i Kolory
             const [diplomaTextColor, setDiplomaTextColor] = useState('#1e293b');
             const [garlandTextColor, setGarlandTextColor] = useState('#6366f1');
             const [borderStyle, setBorderStyle] = useState('solid'); 
@@ -205,37 +209,39 @@
                 setIsTakingLong(false);
                 setAiError(null);
                 
-                // WERSJA 4.0: IDEALNIE SKONSTRUOWANE PROMPTY BEZ MYLĄCYCH SŁÓW "CHILDREN" / "BABY"
+                // WERSJA 5.0 PL: Wszystkie instrukcje dla AI są teraz w języku polskim!
+                // Dzięki temu model świetnie zrozumie słowo "piesek" i nie pomyśli o dzieciach z powodu angielskiego słowa "children".
+                
                 let layoutModifier = graphicLayout === 'full_background' 
-                    ? "full frame background scene, edge-to-edge illustration, no white background" 
-                    : "isolated on pure white background, clear edges, no scattered background elements";
+                    ? "na cały ekran, pełne tło obrazka, wypełnia całą przestrzeń" 
+                    : "pojedynczy wyizolowany obiekt na czystym białym tle, wycięte z tła, brak innych elementów dookoła";
                 
                 let styleModifier = "";
                 switch(artStyle) {
-                  case 'watercolor': styleModifier = "beautiful watercolor painting, soft pastel colors, aesthetic"; break;
-                  case 'boho': styleModifier = "trendy boho art, earthy muted colors, minimalist aesthetic"; break;
-                  case 'doodle': styleModifier = "hand drawn doodle sketch, colored pencil style, book illustration"; break;
-                  case 'papercraft': styleModifier = "3d papercraft cutout art, soft shadows"; break;
-                  case 'vibrant': styleModifier = "vibrant vivid colors, high contrast cartoon art"; break;
-                  case 'pastel': styleModifier = "soft dreamy pastel aesthetic, gentle lighting"; break;
-                  case 'realistic': styleModifier = "highly detailed, highly realistic photography style, 8k"; break;
-                  case '3d': styleModifier = "cute 3d clay render, smooth lighting"; break;
-                  case 'comic': styleModifier = "comic book pop art style, cel shaded, flat colors"; break;
-                  default: styleModifier = "flat vector illustration";
+                  case 'watercolor': styleModifier = "malowane farbami akwarelowymi, estetyczne, delikatne pastelowe kolory"; break;
+                  case 'boho': styleModifier = "styl boho, stonowane barwy ziemi, minimalistyczne"; break;
+                  case 'doodle': styleModifier = "prosty ręcznie rysowany szkic, urocze"; break;
+                  case 'papercraft': styleModifier = "wycinanka z papieru 3D, miękkie cienie"; break;
+                  case 'vibrant': styleModifier = "kolorowa kreskówka, żywe jasne kolory"; break;
+                  case 'pastel': styleModifier = "pastelowe kolory, delikatne światło, marzycielskie"; break;
+                  case 'realistic': styleModifier = "bardzo realistyczne, szczegółowa piękna fotografia"; break;
+                  case '3d': styleModifier = "urocza grafika 3D, styl animacji z plasteliny"; break;
+                  case 'comic': styleModifier = "styl komiksu pop art, wyraźne czarne kontury"; break;
+                  default: styleModifier = "płaska kolorowa ilustracja";
                 }
 
                 let ageModifier = "";
                 switch(ageGroup) {
-                  case 'zlobek': ageModifier = "nursery illustration style, extremely adorable, soft friendly shapes"; break;
-                  case 'przedszkole': ageModifier = "colorful cartoon style, cheerful, magical mood"; break;
-                  case 'szkola': ageModifier = "modern educational illustration style, clear forms"; break;
-                  case 'starszaki': ageModifier = "stylish trendy aesthetic vector art"; break;
-                  case 'uniwersalne': ageModifier = "clean universal elegant illustration style"; break;
+                  case 'zlobek': ageModifier = "bardzo urocze, styl dla niemowlaków i żłobka"; break;
+                  case 'przedszkole': ageModifier = "wesołe, bajkowe, radosne, dla przedszkolaków"; break;
+                  case 'szkola': ageModifier = "styl szkolny, edukacyjny"; break;
+                  case 'starszaki': ageModifier = "młodzieżowe, estetyczne, nowoczesne"; break;
+                  case 'uniwersalne': ageModifier = "eleganckie, uniwersalne, ładne"; break;
                   default: ageModifier = "";
                 }
 
-                // AI najlepiej działa, gdy wyraźnie wskażemy mu co jest TEMATEM (po polsku) a co STYLEM (po angielsku)
-                const fullPrompt = `Subject to draw: ${aiPrompt}. Art style applied to subject: ${styleModifier}, ${ageModifier}, ${layoutModifier}`;
+                // AI w końcu dostanie 100% poprawnie zbudowane, jednojęzyczne zdanie
+                const fullPrompt = `${aiPrompt}, ${styleModifier}, ${ageModifier}, ${layoutModifier}`;
                 
                 const longWaitTimer = setTimeout(() => {
                     setIsTakingLong(true);
@@ -245,8 +251,6 @@
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
                     
-                    // Usunęliśmy twarde narzucanie modelu "flux", dzięki temu serwery same wybierają najlepszy 
-                    // i co najważniejsze - znowu poprawnie działają wbudowane translatory w locie!
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&r=${Date.now()}`;
                     
                     const img = new Image();
@@ -341,7 +345,7 @@
                     <nav className="bg-white border-b px-8 py-4 flex justify-between items-center print-hidden sticky top-0 z-50 shadow-sm">
                         <div className="flex items-center space-x-3 font-black text-2xl tracking-tight">
                             <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="Award" size={24}/></div>
-                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-indigo-600 ml-1 font-bold bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">v4.0 Final</span></span>
+                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-red-600 ml-1 font-bold bg-red-50 px-2 py-1 rounded-md border border-red-200">v5.0 Polska Szkoła</span></span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
@@ -466,7 +470,7 @@
                                                     <textarea 
                                                         value={aiPrompt} 
                                                         onChange={e => setAiPrompt(e.target.value)} 
-                                                        placeholder="Po prostu wpisz po polsku (np. Samochód wyścigowy, dwa wesołe pieski, sowa w okularach)..." 
+                                                        placeholder="Po prostu wpisz co chcesz (np. Samochód wyścigowy, dwa wesołe pieski, sowa w okularach)..." 
                                                         className="w-full p-4 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white resize-none"
                                                         rows="3"
                                                     />
@@ -479,7 +483,7 @@
                                                 {isTakingLong && (
                                                     <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold text-center animate-pulse flex flex-col items-center justify-center gap-1 shadow-sm">
                                                         <span>⏳ Prosimy o cierpliwość...</span>
-                                                        <span className="font-medium text-[10px]">Oczekiwanie w kolejce serwera. Przeglądarka lada moment pobierze grafikę!</span>
+                                                        <span className="font-medium text-[10px]">Trwa malowanie. Przeglądarka lada moment pobierze grafikę!</span>
                                                     </div>
                                                 )}
                                                 
