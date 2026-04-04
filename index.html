@@ -180,6 +180,7 @@
             const [diplomaTextColor, setDiplomaTextColor] = useState('#1e293b');
             const [garlandTextColor, setGarlandTextColor] = useState('#6366f1');
             const [diplomaBgColor, setDiplomaBgColor] = useState(THEMES[5].bgHex);
+            const [diplomaBorderColor, setDiplomaBorderColor] = useState(THEMES[5].borderHex);
             const [borderStyle, setBorderStyle] = useState('solid'); 
             const [borderWidth, setBorderWidth] = useState(12);
             const [selectedThemeId, setSelectedThemeId] = useState('pasowanie');
@@ -200,6 +201,7 @@
             useEffect(() => {
                 setGarlandTextColor(activeTheme.borderHex);
                 setDiplomaBgColor(activeTheme.bgHex);
+                setDiplomaBorderColor(activeTheme.borderHex);
             }, [selectedThemeId]);
 
             const handleVerifyCode = () => {
@@ -335,7 +337,7 @@
                 return (
                     <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden drop-shadow-lg">
                         <svg viewBox="0 0 100 120" className="w-full h-full" preserveAspectRatio="none">
-                            <path d="M5,5 L95,5 L50,115 Z" fill={fillVal} stroke={activeTheme.borderHex} strokeWidth={borderWidth/2} strokeDasharray={borderStyle === 'dashed' ? '5,5' : 'none'} strokeLinejoin="round" />
+                            <path d="M5,5 L95,5 L50,115 Z" fill={fillVal} stroke={diplomaBorderColor} strokeWidth={borderWidth/2} strokeDasharray={borderStyle === 'dashed' ? '5,5' : 'none'} strokeLinejoin="round" />
                             <circle cx="15" cy="15" r="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.5"/>
                             <circle cx="85" cy="15" r="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.5"/>
                         </svg>
@@ -345,7 +347,7 @@
                             
                             <div className="absolute border-2 border-dashed rounded-full flex items-center justify-center"
                                  style={{ 
-                                     borderColor: activeTheme.borderHex, 
+                                     borderColor: diplomaBorderColor, 
                                      width: `${garlandLetterSize * 1.5}px`, 
                                      height: `${garlandLetterSize * 1.5}px`,
                                      transform: `translateY(${garlandLetterOffset}px)`,
@@ -614,10 +616,14 @@
                                         
                                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                             <label className="text-[10px] font-bold text-gray-500 uppercase mb-4 block tracking-widest text-center">Główne Kolory</label>
-                                            <div className="grid grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                                 <div className="flex flex-col items-center group">
                                                     <input type="color" value={diplomaBgColor} onChange={e => setDiplomaBgColor(e.target.value)} className="w-full h-12 rounded-xl cursor-pointer bg-white p-1 border shadow-sm group-hover:border-indigo-300 transition-colors" />
                                                     <span className="text-[9px] mt-2 font-bold text-indigo-500 uppercase text-center leading-tight">Tło Dyplomu</span>
+                                                </div>
+                                                <div className="flex flex-col items-center group">
+                                                    <input type="color" value={diplomaBorderColor} onChange={e => setDiplomaBorderColor(e.target.value)} className="w-full h-12 rounded-xl cursor-pointer bg-white p-1 border shadow-sm group-hover:border-indigo-300 transition-colors" />
+                                                    <span className="text-[9px] mt-2 font-bold text-indigo-500 uppercase text-center leading-tight">Ramka</span>
                                                 </div>
                                                 <div className="flex flex-col items-center group">
                                                     <input type="color" value={diplomaTextColor} onChange={e => setDiplomaTextColor(e.target.value)} className="w-full h-12 rounded-xl cursor-pointer bg-white p-1 border shadow-sm group-hover:border-indigo-300 transition-colors" />
@@ -679,7 +685,7 @@
                                         backgroundColor: diplomaBgColor,
                                         borderWidth: `${borderWidth}px`,
                                         borderStyle: borderStyle,
-                                        borderColor: activeTheme.borderHex,
+                                        borderColor: diplomaBorderColor,
                                         color: diplomaTextColor
                                     }}
                                 >
