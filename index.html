@@ -48,7 +48,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
@@ -62,7 +62,8 @@
                 Key: <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3y-3.5L15.5 7.5z"/>,
                 Settings: <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>,
                 Lock: (<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>),
-                HelpCircle: (<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>)
+                HelpCircle: (<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>),
+                Image: (<><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>)
             };
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -72,28 +73,27 @@
         };
 
         const THEMES = [
-          { id: 'watercolor', name: 'Akwarelowy Sen', bg: 'bg-white', borderHex: '#818cf8', elements: ['☁️', '✨'] },
-          { id: 'boho', name: 'Styl Boho', bg: 'bg-[#FAF9F6]', borderHex: '#D4B895', elements: ['🌿', '☀️'] },
-          { id: 'rodzina', name: 'Dzień Rodziny', bg: 'bg-rose-50', borderHex: '#f43f5e', elements: ['❤️', '🏡'] },
-          { id: 'autyzm', name: 'Dzień Autyzmu', bg: 'bg-blue-50', borderHex: '#3b82f6', elements: ['💙', '🧩'] },
-          { id: 'skarpetka', name: 'Dzień Skarpetki', bg: 'bg-fuchsia-50', borderHex: '#fb923c', elements: ['🧦', '🌈'] },
-          { id: 'pasowanie', name: 'Pasowanie', bg: 'bg-indigo-50', borderHex: '#6366f1', elements: ['🎒', '🖍️'] },
-          { id: 'zakonczenie', name: 'Zakończenie Roku', bg: 'bg-yellow-50', borderHex: '#eab308', elements: ['🎓', '🌻'] },
-          { id: 'przedszkolak', name: 'Dzień Przedszkolaka', bg: 'bg-yellow-100', borderHex: '#f87171', elements: ['🎈', '🧸'] },
-          { id: 'dziecko', name: 'Dzień Dziecka', bg: 'bg-green-50', borderHex: '#4ade80', elements: ['🍭', '🎠'] },
-          { id: 'nauczyciel', name: 'Dzień Nauczyciela', bg: 'bg-indigo-50', borderHex: '#6366f1', elements: ['🦉', '✏️'] },
-          { id: 'space', name: 'Kosmos', bg: 'bg-indigo-900', borderHex: '#818cf8', elements: ['🚀', '⭐'] },
-          { id: 'wiosna', name: 'Pani Wiosna', bg: 'bg-pink-50', borderHex: '#f472b6', elements: ['🌸', '🦋'] },
-          { id: 'zima', name: 'Pani Zima', bg: 'bg-sky-50', borderHex: '#7dd3fc', elements: ['❄️', '⛄'] },
-          { id: 'jesien', name: 'Pani Jesień', bg: 'bg-orange-50', borderHex: '#ea580c', elements: ['🍁', '🍄'] },
-          { id: 'lato', name: 'Powitanie Lata', bg: 'bg-yellow-50', borderHex: '#facc15', elements: ['☀️', '🏖️'] }
+          { id: 'watercolor', name: 'Akwarelowy Sen', bgHex: '#ffffff', borderHex: '#818cf8', elements: ['☁️', '✨'] },
+          { id: 'boho', name: 'Styl Boho', bgHex: '#FAF9F6', borderHex: '#D4B895', elements: ['🌿', '☀️'] },
+          { id: 'rodzina', name: 'Dzień Rodziny', bgHex: '#fff1f2', borderHex: '#f43f5e', elements: ['❤️', '🏡'] },
+          { id: 'autyzm', name: 'Dzień Autyzmu', bgHex: '#eff6ff', borderHex: '#3b82f6', elements: ['💙', '🧩'] },
+          { id: 'skarpetka', name: 'Dzień Skarpetki', bgHex: '#fdf4ff', borderHex: '#fb923c', elements: ['🧦', '🌈'] },
+          { id: 'pasowanie', name: 'Pasowanie', bgHex: '#eef2ff', borderHex: '#6366f1', elements: ['🎒', '🖍️'] },
+          { id: 'zakonczenie', name: 'Zakończenie Roku', bgHex: '#fefce8', borderHex: '#eab308', elements: ['🎓', '🌻'] },
+          { id: 'przedszkolak', name: 'Dzień Przedszkolaka', bgHex: '#fef9c3', borderHex: '#f87171', elements: ['🎈', '🧸'] },
+          { id: 'dziecko', name: 'Dzień Dziecka', bgHex: '#f0fdf4', borderHex: '#4ade80', elements: ['🍭', '🎠'] },
+          { id: 'nauczyciel', name: 'Dzień Nauczyciela', bgHex: '#eef2ff', borderHex: '#6366f1', elements: ['🦉', '✏️'] },
+          { id: 'space', name: 'Kosmos', bgHex: '#312e81', borderHex: '#818cf8', elements: ['🚀', '⭐'] },
+          { id: 'wiosna', name: 'Pani Wiosna', bgHex: '#fdf2f8', borderHex: '#f472b6', elements: ['🌸', '🦋'] },
+          { id: 'zima', name: 'Pani Zima', bgHex: '#f0f9ff', borderHex: '#7dd3fc', elements: ['❄️', '⛄'] },
+          { id: 'jesien', name: 'Pani Jesień', bgHex: '#fff7ed', borderHex: '#ea580c', elements: ['🍁', '🍄'] },
+          { id: 'lato', name: 'Powitanie Lata', bgHex: '#fefce8', borderHex: '#facc15', elements: ['☀️', '🏖️'] }
         ];
 
-        // --- FUNKCJA PRZEZROCZYSTEGO TŁA (AGRESYWNA GUMKA) ---
         const makeWhiteTransparent = (imageSrc) => {
             return new Promise((resolve) => {
                 const img = new Image();
-                if (!imageSrc.startsWith('blob:')) {
+                if (!imageSrc.startsWith('blob:') && !imageSrc.startsWith('data:')) {
                     img.crossOrigin = 'Anonymous';
                 }
                 img.onload = () => {
@@ -106,17 +106,14 @@
                         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                         const data = imageData.data;
                         
-                        // Zwiększona tolerancja! Tniemy wszystko co jest bliskie bieli.
                         for (let i = 0; i < data.length; i += 4) {
                             const r = data[i];
                             const g = data[i+1];
                             const b = data[i+2];
                             
-                            // Jeśli kolor jest bardzo jasny (powyżej 225 z 255) - tniemy go do zera!
                             if (r > 225 && g > 225 && b > 225) {
                                 data[i+3] = 0; 
                             } 
-                            // Miękkie wygładzanie krawędzi dla trochę ciemniejszych pikseli
                             else if (r > 190 && g > 190 && b > 190) {
                                 data[i+3] = (255 - Math.max(r, g, b)) * 2.5; 
                             }
@@ -140,6 +137,8 @@
             const [accessCode, setAccessCode] = useState('');
             const [showInstructions, setShowInstructions] = useState(false);
             
+            const fileInputRef = useRef(null);
+
             const [diplomaTitle, setDiplomaTitle] = useState('DYPLOM');
             const [diplomaSubtitle, setDiplomaSubtitle] = useState('ZA WYBITNE OSIĄGNIĘCIA');
             const [studentName, setStudentName] = useState('Jan Kowalski');
@@ -180,6 +179,7 @@
 
             const [diplomaTextColor, setDiplomaTextColor] = useState('#1e293b');
             const [garlandTextColor, setGarlandTextColor] = useState('#6366f1');
+            const [diplomaBgColor, setDiplomaBgColor] = useState(THEMES[5].bgHex);
             const [borderStyle, setBorderStyle] = useState('solid'); 
             const [borderWidth, setBorderWidth] = useState(12);
             const [selectedThemeId, setSelectedThemeId] = useState('pasowanie');
@@ -188,7 +188,6 @@
             const [artStyle, setArtStyle] = useState('watercolor'); 
             const [graphicLayout, setGraphicLayout] = useState('bottom_corners'); 
             const [diplomaOrientation, setDiplomaOrientation] = useState('horizontal');
-            const [ageGroup, setAgeGroup] = useState('przedszkole');
 
             const [aiPrompt, setAiPrompt] = useState('');
             const [customImage, setCustomImage] = useState(null);
@@ -200,11 +199,32 @@
 
             useEffect(() => {
                 setGarlandTextColor(activeTheme.borderHex);
+                setDiplomaBgColor(activeTheme.bgHex);
             }, [selectedThemeId]);
 
             const handleVerifyCode = () => {
                 if (accessCode.toUpperCase() === 'KAWA2024') { setIsPremium(true); setAccessCode(''); }
                 else alert('Nieprawidłowy kod!');
+            };
+
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const imgData = event.target.result;
+                    if (graphicLayout === 'full_background') {
+                        setCustomImage(imgData);
+                    } else {
+                        // Gumka zadziała też na wgrywanym zdjęciu!
+                        const transparentImg = await makeWhiteTransparent(imgData);
+                        setCustomImage(transparentImg);
+                    }
+                };
+                reader.readAsDataURL(file);
+                // Reset inputa, żeby można było wgrać ten sam plik ponownie
+                e.target.value = null; 
             };
 
             const handleGenerateAiImage = async () => {
@@ -219,7 +239,6 @@
                     const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(aiPrompt)}&langpair=pl|en`);
                     const data = await res.json();
                     if (data && data.responseData && data.responseData.translatedText) {
-                        // Zabezpieczenie przed limitem darmowego tłumacza
                         if(!data.responseData.translatedText.includes("MYMEMORY WARNING")){
                             translatedPrompt = data.responseData.translatedText;
                         }
@@ -246,17 +265,8 @@
                   default: styleModifier = `flat vector illustration, ${layoutModifier}`;
                 }
 
-                let ageModifier = "";
-                switch(ageGroup) {
-                  case 'zlobek': ageModifier = "cute nursery aesthetic, extremely adorable, soft friendly shapes"; break;
-                  case 'przedszkole': ageModifier = "cheerful magical aesthetic, colorful, cute style"; break;
-                  case 'szkola': ageModifier = "cool modern educational style, clear forms"; break;
-                  case 'starszaki': ageModifier = "stylish trendy design, mature, aesthetic"; break;
-                  case 'uniwersalne': ageModifier = "clean elegant style, universal appeal, timeless illustration"; break;
-                  default: ageModifier = "";
-                }
-
-                const fullPrompt = `${translatedPrompt} - ${ageModifier}, ${styleModifier}`;
+                // Bezpieczne generowanie (bez słów typu children)
+                const fullPrompt = `${translatedPrompt}, cute and aesthetic, ${styleModifier}`;
                 
                 const longWaitTimer = setTimeout(() => {
                     setIsTakingLong(true);
@@ -268,7 +278,6 @@
                     
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux&r=${Date.now()}`;
                     
-                    // POBIERANIE JAKO BLOB (Omija blokady przeglądarek, gwarantując usunięcie tła)
                     fetch(imageUrl, { cache: "no-store" })
                         .then(res => {
                             if (!res.ok) throw new Error("Błąd pobierania");
@@ -321,11 +330,7 @@
             };
 
             const renderGarlandShape = (letter) => {
-                let fillVal = '#ffffff';
-                if (activeTheme.id === 'boho') fillVal = '#FAF9F6';
-                if (activeTheme.id === 'rodzina') fillVal = '#fff1f2';
-                if (activeTheme.bg.includes('blue-50')) fillVal = '#eff6ff';
-                if (activeTheme.bg.includes('indigo-900')) fillVal = '#312e81';
+                let fillVal = diplomaBgColor;
 
                 return (
                     <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden drop-shadow-lg">
@@ -369,7 +374,7 @@
                     <nav className="bg-white border-b px-8 py-4 flex justify-between items-center print-hidden sticky top-0 z-50 shadow-sm">
                         <div className="flex items-center space-x-3 font-black text-2xl tracking-tight">
                             <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="Award" size={24}/></div>
-                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-emerald-600 ml-1 font-bold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">v10.1 Czysty Dyplom</span></span>
+                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-fuchsia-600 ml-1 font-bold bg-fuchsia-50 px-2 py-1 rounded-md border border-fuchsia-200">v11.0 Pełna Kontrola</span></span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
@@ -395,21 +400,6 @@
                             <div className="bg-white p-5 rounded-3xl shadow-sm border border-indigo-100 space-y-5 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
                                 <h2 className="font-bold flex items-center text-indigo-900 text-sm uppercase tracking-widest"><Icon name="Settings" size={18} className="mr-2 text-indigo-500"/> Podstawa</h2>
-                                
-                                <div className="space-y-2">
-                                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dla kogo rysujemy?</label>
-                                  <div className="flex flex-wrap gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
-                                    {[
-                                      { id: 'zlobek', label: '👶 Żłobek' },
-                                      { id: 'przedszkole', label: '🎈 Przedszkole' },
-                                      { id: 'szkola', label: '🎒 Szkoła 1-3' },
-                                      { id: 'starszaki', label: '🎓 Starszaki' },
-                                      { id: 'uniwersalne', label: '🌍 Uniwersalne' }
-                                    ].map(age => (
-                                      <button key={age.id} onClick={() => setAgeGroup(age.id)} className={`flex-1 min-w-[80px] py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${ageGroup === age.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}>{age.label}</button>
-                                    ))}
-                                  </div>
-                                </div>
 
                                 <div className="space-y-2">
                                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Styl Grafiki</label>
@@ -432,7 +422,7 @@
 
                                 <div className="flex flex-col sm:flex-row gap-3">
                                   <div className="flex-1 space-y-2">
-                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Układ</label>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Układ Obrazków</label>
                                     <div className="flex gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
                                       <button onClick={() => setGraphicLayout('bottom_corners')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border ${graphicLayout === 'bottom_corners' ? 'bg-white shadow border-indigo-200 text-indigo-700' : 'border-transparent text-gray-500 hover:bg-gray-200'}`}>✨ Rogi</button>
                                       <button onClick={() => setGraphicLayout('bottom_center')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border ${graphicLayout === 'bottom_center' ? 'bg-white shadow border-indigo-200 text-indigo-700' : 'border-transparent text-gray-500 hover:bg-gray-200'}`}>🌟 Środek</button>
@@ -467,8 +457,8 @@
                             <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1 flex-wrap sm:flex-nowrap">
                                 <button onClick={() => {setActiveTab('diploma'); setPreviewMode('diploma');}} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'diploma' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Award" size={18} className="mb-1.5"/>Dyplom</button>
                                 <button onClick={() => {setActiveTab('garland'); setPreviewMode('garland');}} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'garland' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Type" size={18} className="mb-1.5"/>Girlanda</button>
+                                <button onClick={() => setActiveTab('motywy')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'motywy' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Palette" size={18} className="mb-1.5"/>Motywy</button>
                                 <button onClick={() => setActiveTab('ai')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'ai' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Wand2" size={18} className="mb-1.5 text-purple-500"/>Grafika AI</button>
-                                <button onClick={() => setActiveTab('themes')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'themes' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Palette" size={18} className="mb-1.5"/>Motywy</button>
                                 <button onClick={() => setActiveTab('sliders')} className={`flex-1 py-3.5 px-2 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold uppercase tracking-wide transition-all ${activeTab === 'sliders' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/50' : 'text-gray-400 hover:bg-gray-50'}`}><Icon name="Sliders" size={18} className="mb-1.5"/>Szlify</button>
                             </div>
 
@@ -495,7 +485,7 @@
                                                     <textarea 
                                                         value={aiPrompt} 
                                                         onChange={e => setAiPrompt(e.target.value)} 
-                                                        placeholder="Po prostu wpisz co chcesz (np. sowa w okularach, wesoły zajączek, samochód wyścigowy)..." 
+                                                        placeholder="Po prostu wpisz po polsku (np. sowa w okularach, wesoły zajączek, samochód wyścigowy)..." 
                                                         className="w-full p-4 border border-indigo-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100 bg-white resize-none"
                                                         rows="3"
                                                     />
@@ -520,7 +510,7 @@
 
                                                 {customImage && (
                                                     <button onClick={() => setCustomImage(null)} className="w-full mt-2 text-xs font-bold text-red-500 hover:text-red-700 py-2.5 border border-red-100 rounded-xl hover:bg-red-50 transition-colors">
-                                                        Usuń wygenerowaną grafikę i wróć do motywów
+                                                        Usuń wygenerowaną grafikę
                                                     </button>
                                                 )}
                                               </div>
@@ -573,11 +563,42 @@
                                         </div>
                                     </div>
                                 )}
-                                {activeTab === 'themes' && (
-                                    <div className="space-y-5">
+                                {activeTab === 'motywy' && (
+                                    <div className="space-y-6">
+                                        
+                                        {/* WŁASNA GRAFIKA UPLOAD */}
+                                        <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 shadow-sm relative">
+                                            <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[9px] font-black px-2 py-1 rounded-bl-lg uppercase tracking-wider">Nowość</div>
+                                            <label className="text-[11px] font-bold text-indigo-800 uppercase tracking-widest mb-3 block text-center">Masz własny obrazek?</label>
+                                            
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                onChange={handleFileUpload} 
+                                                ref={fileInputRef} 
+                                                className="hidden" 
+                                            />
+                                            <button 
+                                                onClick={() => fileInputRef.current.click()} 
+                                                className="w-full bg-white border-2 border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-400 py-6 rounded-xl font-bold transition-all flex flex-col items-center justify-center gap-3 shadow-sm"
+                                            >
+                                                <div className="p-3 bg-indigo-100 rounded-full"><Icon name="Image" size={28} /></div>
+                                                <span>Wgraj grafikę z komputera</span>
+                                            </button>
+                                            <p className="text-[10px] text-indigo-500/80 text-center mt-3 leading-tight">Magiczna Gumka automatycznie usunie tło (białe) z Twojego obrazka, żeby idealnie wtopił się w dyplom!</p>
+
+                                            {customImage && (
+                                                <button onClick={() => setCustomImage(null)} className="w-full mt-4 text-xs font-bold text-red-500 hover:text-red-700 py-3 border border-red-200 bg-white rounded-xl hover:bg-red-50 transition-colors shadow-sm">
+                                                    Usuń wgraną grafikę
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <hr className="border-gray-100" />
+
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Wybierz Gotowy Motyw Kolorystyczny</label>
-                                            <div className="grid grid-cols-3 gap-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Lub Wybierz Gotowe Tło i Ozdoby</label>
+                                            <div className="grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                                 {THEMES.map(t => (
                                                     <button key={t.id} onClick={() => {setSelectedThemeId(t.id); setCustomImage(null);}} className={`p-3 rounded-xl border-2 flex flex-col items-center transition-all duration-200 ${selectedThemeId === t.id ? 'border-indigo-500 bg-indigo-50 shadow-sm scale-[1.02]' : 'border-gray-100 hover:border-indigo-200 hover:bg-gray-50'}`}>
                                                         <span className="text-2xl mb-1">{t.elements[0]}</span>
@@ -592,15 +613,19 @@
                                     <div className="space-y-5 max-h-[450px] overflow-y-auto pr-3 custom-scrollbar">
                                         
                                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-3 block tracking-widest text-center">Kolory Czcionek (Dodatki)</label>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="flex flex-col items-center">
-                                                    <input type="color" value={diplomaTextColor} onChange={e => setDiplomaTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
-                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase text-center leading-tight">Data / Stopka</span>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-4 block tracking-widest text-center">Główne Kolory</label>
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <div className="flex flex-col items-center group">
+                                                    <input type="color" value={diplomaBgColor} onChange={e => setDiplomaBgColor(e.target.value)} className="w-full h-12 rounded-xl cursor-pointer bg-white p-1 border shadow-sm group-hover:border-indigo-300 transition-colors" />
+                                                    <span className="text-[9px] mt-2 font-bold text-indigo-500 uppercase text-center leading-tight">Tło Dyplomu</span>
                                                 </div>
-                                                <div className="flex flex-col items-center">
-                                                    <input type="color" value={garlandTextColor} onChange={e => setGarlandTextColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer bg-white p-1 border shadow-sm" />
-                                                    <span className="text-[9px] mt-1 font-bold text-gray-400 uppercase">Girlanda</span>
+                                                <div className="flex flex-col items-center group">
+                                                    <input type="color" value={diplomaTextColor} onChange={e => setDiplomaTextColor(e.target.value)} className="w-full h-12 rounded-xl cursor-pointer bg-white p-1 border shadow-sm group-hover:border-indigo-300 transition-colors" />
+                                                    <span className="text-[9px] mt-2 font-bold text-gray-500 uppercase text-center leading-tight">Data / Stopka</span>
+                                                </div>
+                                                <div className="flex flex-col items-center group">
+                                                    <input type="color" value={garlandTextColor} onChange={e => setGarlandTextColor(e.target.value)} className="w-full h-12 rounded-xl cursor-pointer bg-white p-1 border shadow-sm group-hover:border-indigo-300 transition-colors" />
+                                                    <span className="text-[9px] mt-2 font-bold text-gray-500 uppercase text-center leading-tight">Girlanda</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -649,8 +674,9 @@
                             {previewMode === 'diploma' ? (
                                 <div 
                                     id="print-area"
-                                    className={`relative flex flex-col justify-between ${diplomaOrientation === 'horizontal' ? 'w-full aspect-[1.414]' : 'w-[85%] mx-auto aspect-[0.707]'} ${activeTheme.bg} rounded-[2.5rem] p-10 md:p-14 text-center shadow-2xl shadow-gray-200 transition-all duration-500 overflow-hidden bg-cover bg-center bg-no-repeat`}
+                                    className={`relative flex flex-col justify-between ${diplomaOrientation === 'horizontal' ? 'w-full aspect-[1.414]' : 'w-[85%] mx-auto aspect-[0.707]'} rounded-[2.5rem] p-10 md:p-14 text-center shadow-2xl shadow-gray-200 transition-all duration-500 overflow-hidden bg-cover bg-center bg-no-repeat`}
                                     style={{ 
+                                        backgroundColor: diplomaBgColor,
                                         borderWidth: `${borderWidth}px`,
                                         borderStyle: borderStyle,
                                         borderColor: activeTheme.borderHex,
@@ -665,7 +691,7 @@
                                         </div>
                                     )}
 
-                                    {/* Ilustracja AI */}
+                                    {/* Ilustracja AI lub Własna Wgrana */}
                                     {customImage && (
                                         <div className="absolute inset-0 z-10 pointer-events-none">
                                             {graphicLayout === 'full_background' ? (
@@ -728,7 +754,7 @@
                                         }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
                                     </div>
 
-                                    {/* Stopka Dyplomu - USUNIĘTO PIECZĘĆ */}
+                                    {/* Stopka Dyplomu */}
                                     <div className="z-20 relative flex justify-between items-end px-4 md:px-12 pb-2 flex-shrink-0 w-full select-none">
                                         <div className="text-center w-64 border-t-2 pt-3" style={{ borderColor: `${diplomaTextColor}40` }}>
                                             <div className="font-bold text-lg mb-1" style={{ color: diplomaTextColor }}>{diplomaDate}</div>
@@ -784,14 +810,14 @@
                                     <div className="space-y-3">
                                         <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 3: Wybór Grafiki</h3>
                                         <ul className="list-disc pl-5 space-y-2">
-                                            <li><strong>Błyskawicznie:</strong> Zakładka <em>Motywy</em> – kliknij w gotowy motyw (np. Kosmos, Wiosna), a system sam dobierze odpowiednie kolory i tła.</li>
+                                            <li><strong>Błyskawicznie:</strong> Zakładka <em>Motywy</em> – wgraj własne zdjęcie z komputera lub wybierz jeden z gotowych motywów kolorystycznych z ikonkami tła.</li>
                                             <li><strong>Grafika AI (Premium):</strong> Zakładka <em>Grafika AI</em> – po prostu wpisz po polsku co chcesz zobaczyć! <em>(Wymaga kodu dostępu)</em>.</li>
                                         </ul>
                                     </div>
 
                                     <div className="space-y-3">
                                         <h3 className="font-bold text-indigo-900 text-lg border-b pb-1">Krok 4: Szlify</h3>
-                                        <p>W zakładce <strong>Szlify</strong> znajdziesz zaawansowane opcje. Możesz zmienić styl ramek, kolory girlandy oraz dostosować "Szybę Dyplomu" (rozmyte tło pod tekstem), tak aby tekst był idealnie czytelny.</p>
+                                        <p>W zakładce <strong>Szlify</strong> znajdziesz zaawansowane opcje. Możesz zmienić kolor tła całego dyplomu, styl ramek, kolory girlandy oraz dostosować "Szybę Dyplomu" (rozmyte tło pod tekstem), tak aby tekst był idealnie czytelny.</p>
                                     </div>
 
                                     <div className="space-y-3 bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
