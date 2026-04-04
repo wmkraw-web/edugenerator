@@ -209,7 +209,10 @@
                     const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(aiPrompt)}&langpair=pl|en`);
                     const data = await res.json();
                     if (data && data.responseData && data.responseData.translatedText) {
-                        translatedPrompt = data.responseData.translatedText;
+                        // Zabezpieczenie przed limitem darmowego tłumacza
+                        if(!data.responseData.translatedText.includes("MYMEMORY WARNING")){
+                            translatedPrompt = data.responseData.translatedText;
+                        }
                     }
                 } catch(e) {
                     console.log("Błąd tłumaczenia, używamy oryginału", e);
@@ -253,7 +256,8 @@
                     const seed = Math.floor(Math.random() * 1000000);
                     const encodedPrompt = encodeURIComponent(fullPrompt);
                     
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&r=${Date.now()}`;
+                    // PRZYWRÓCONO NAJLEPSZY MODEL: &model=flux !!! Koniec z brzydkimi obrazkami.
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux&r=${Date.now()}`;
                     
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
