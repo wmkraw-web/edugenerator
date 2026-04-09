@@ -195,7 +195,6 @@
             const [aiPrompt, setAiPrompt] = useState('');
             const [customImage, setCustomImage] = useState(null);
             const [isGenerating, setIsGenerating] = useState(false);
-            const [isTakingLong, setIsTakingLong] = useState(false);
             const [aiError, setAiError] = useState(null); 
 
             const activeTheme = THEMES.find(t => t.id === selectedThemeId) || THEMES[0];
@@ -221,115 +220,89 @@
                     if (graphicLayout === 'full_background') {
                         setCustomImage(imgData);
                     } else {
-                        // Gumka zadziała też na wgrywanym zdjęciu!
                         const transparentImg = await makeWhiteTransparent(imgData);
                         setCustomImage(transparentImg);
                     }
                 };
                 reader.readAsDataURL(file);
-                // Reset inputa, żeby można było wgrać ten sam plik ponownie
                 e.target.value = null; 
             };
 
+            // --- NOWY, SUPERSZYBKI GENERATOR AI (Przez API Vercela / FAL) ---
             const handleGenerateAiImage = async () => {
                 if (!aiPrompt.trim()) return;
                 setIsGenerating(true);
-                setIsTakingLong(false);
                 setAiError(null);
                 
                 let translatedPrompt = aiPrompt;
                 
+                // 1. Tłumacz Google (niezawodny)
                 try {
-                    const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(aiPrompt)}&langpair=pl|en`);
-                    const data = await res.json();
-                    if (data && data.responseData && data.responseData.translatedText) {
-                        if(!data.responseData.translatedText.includes("MYMEMORY WARNING")){
-                            translatedPrompt = data.responseData.translatedText;
-                        }
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=pl&tl=en&dt=t&q=${encodeURIComponent(aiPrompt)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        translatedPrompt = data[0][0][0];
                     }
                 } catch(e) {
-                    console.log("Błąd tłumaczenia, używamy oryginału", e);
+                    console.log("Błąd tłumaczenia, używamy oryginału");
                 }
 
+                // 2. Konfiguracja stylu i układu
                 let layoutModifier = graphicLayout === 'full_background' 
                     ? "full frame background scene, edge-to-edge illustration, fully filled canvas" 
-                    : "single distinct object, isolated on pure solid white background, no background elements, no text, no words, no letters";
+                    : "isolated on pure solid white background, no background elements, no text, no words, no letters";
                 
                 let styleModifier = "";
                 switch(artStyle) {
-                  case 'watercolor': styleModifier = `beautiful watercolor art, soft pastel colors, painted artistic style, aesthetic, ${layoutModifier}`; break;
-                  case 'boho': styleModifier = `trendy boho style art, earthy muted pastel colors, minimalist decor, aesthetic shapes, ${layoutModifier}`; break;
-                  case 'doodle': styleModifier = `hand drawn doodle sketch, colored pencil style, book illustration, cozy, ${layoutModifier}`; break;
-                  case 'papercraft': styleModifier = `3d papercraft illustration, layered paper cutout style, soft shadows, ${layoutModifier}`; break;
-                  case 'vibrant': styleModifier = `vibrant bold colors, high contrast, vivid, colorful cartoon illustration, energetic, ${layoutModifier}`; break;
-                  case 'pastel': styleModifier = `soft pastel aesthetic, dreamy colors, gentle lighting, cute pinterest style, ${layoutModifier}`; break;
-                  case 'realistic': styleModifier = `highly detailed, highly realistic, photography style, 8k resolution, cinematic lighting, ${layoutModifier}`; break;
-                  case '3d': styleModifier = `cute 3d render, claymation style, soft lighting, smooth 3d illustration, ${layoutModifier}`; break;
-                  case 'comic': styleModifier = `comic book style, cel shaded, pop art, vibrant flat colors with black outlines, ${layoutModifier}`; break;
-                  default: styleModifier = `flat vector illustration, ${layoutModifier}`;
+                  case 'watercolor': styleModifier = `beautiful watercolor art, soft pastel colors, painted artistic style, aesthetic`; break;
+                  case 'boho': styleModifier = `trendy boho style art, earthy muted pastel colors, minimalist decor, aesthetic shapes`; break;
+                  case 'doodle': styleModifier = `hand drawn doodle sketch, colored pencil style, book illustration, cozy`; break;
+                  case 'papercraft': styleModifier = `3d papercraft illustration, layered paper cutout style, soft shadows`; break;
+                  case 'vibrant': styleModifier = `vibrant bold colors, high contrast, vivid, colorful cartoon illustration, energetic`; break;
+                  case 'pastel': styleModifier = `soft pastel aesthetic, dreamy colors, gentle lighting, cute pinterest style`; break;
+                  case 'realistic': styleModifier = `highly detailed, highly realistic, photography style, 8k resolution, cinematic lighting`; break;
+                  case '3d': styleModifier = `cute 3d render, claymation style, soft lighting, smooth 3d illustration`; break;
+                  case 'comic': styleModifier = `comic book style, cel shaded, pop art, vibrant flat colors with black outlines`; break;
+                  default: styleModifier = `flat vector illustration`;
                 }
 
-                // Bezpieczne generowanie (bez słów typu children)
-                const fullPrompt = `${translatedPrompt}, cute and aesthetic, ${styleModifier}`;
-                
-                const longWaitTimer = setTimeout(() => {
-                    setIsTakingLong(true);
-                }, 6000);
+                // 3. MOCNY PROMPT (Z wymuszeniem Głównego Tematu i białego tła)
+                let fullPrompt = "";
+                if (graphicLayout === 'full_background') {
+                    fullPrompt = `A beautiful background illustration of: ${translatedPrompt}. STYLE: ${styleModifier}. ${layoutModifier}. Masterpiece, high quality.`;
+                } else {
+                    fullPrompt = `MAIN SUBJECT TO DRAW: ${translatedPrompt}. STRICT INSTRUCTION: You must clearly draw exactly the main subject. STYLE: ${styleModifier}. Pure solid white background is mandatory. ${layoutModifier}`;
+                }
                 
                 try {
-                    const seed = Math.floor(Math.random() * 1000000);
-                    const encodedPrompt = encodeURIComponent(fullPrompt);
-                    
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux&r=${Date.now()}`;
-                    
-                    fetch(imageUrl, { cache: "no-store" })
-                        .then(res => {
-                            if (!res.ok) throw new Error("Błąd pobierania");
-                            return res.blob();
-                        })
-                        .then(blob => {
-                            const blobUrl = URL.createObjectURL(blob);
-                            const img = new Image();
-                            
-                            img.onload = async () => {
-                                clearTimeout(longWaitTimer);
-                                setIsTakingLong(false);
-                                
-                                if (graphicLayout === 'full_background') {
-                                    setCustomImage(blobUrl);
-                                } else {
-                                    const transparentImg = await makeWhiteTransparent(blobUrl);
-                                    setCustomImage(transparentImg);
-                                }
-                                setIsGenerating(false);
-                            };
-                            
-                            img.onerror = () => throwErrorFallback();
-                            img.src = blobUrl;
-                        })
-                        .catch(err => throwErrorFallback());
+                    // Pukamy do naszego ukrytego API na Vercelu
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: fullPrompt })
+                    });
 
-                    const throwErrorFallback = () => {
-                        clearTimeout(longWaitTimer);
-                        setIsTakingLong(false);
+                    if (!response.ok) {
+                        throw new Error("Błąd łączenia z API. Sprawdź klucz FAL_KEY w Vercelu.");
+                    }
+
+                    const data = await response.json();
+                    const imageUrl = data.imageUrl;
+                    
+                    // Przetwarzamy pobrany obrazek (Usuwamy białe tło gumką)
+                    if (graphicLayout === 'full_background') {
+                        setCustomImage(imageUrl);
                         setIsGenerating(false);
-                        setAiError(
-                            <div className="flex flex-col items-center gap-2">
-                                <span className="font-bold">Błąd pobierania obrazka 🛑</span>
-                                <span className="font-normal text-[10px]">Serwer jest w tej chwili przeciążony. Odczekaj 30 sekund i spróbuj ponownie.</span>
-                                <a href={imageUrl} target="_blank" rel="noreferrer" className="mt-1 bg-indigo-100 px-3 py-2 rounded-lg border border-indigo-200 text-indigo-800 hover:bg-indigo-200 transition-colors shadow-sm font-bold w-full break-all text-center">
-                                    👉 Kliknij tu, aby zobaczyć powód
-                                </a>
-                            </div>
-                        );
-                    };
+                    } else {
+                        const transparentImg = await makeWhiteTransparent(imageUrl);
+                        setCustomImage(transparentImg);
+                        setIsGenerating(false);
+                    }
 
                 } catch (e) { 
-                    clearTimeout(longWaitTimer);
-                    setIsTakingLong(false);
                     setIsGenerating(false);
                     console.error(e);
-                    setAiError("Wystąpił nieoczekiwany błąd w przeglądarce.");
+                    setAiError("Wystąpił błąd. Upewnij się, że Vercel posiada dodany klucz FAL_KEY w zmiennych środowiskowych.");
                 }
             };
 
@@ -378,7 +351,7 @@
                     <nav className="bg-white border-b px-8 py-4 flex justify-between items-center print-hidden sticky top-0 z-50 shadow-sm">
                         <div className="flex items-center space-x-3 font-black text-2xl tracking-tight">
                             <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="Award" size={24}/></div>
-                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-fuchsia-600 ml-1 font-bold bg-fuchsia-50 px-2 py-1 rounded-md border border-fuchsia-200">v11.0 Pełna Kontrola</span></span>
+                            <span className="text-gray-800">Edu<span className="text-indigo-600">Generator</span> <span className="text-xs text-fuchsia-600 ml-1 font-bold bg-fuchsia-50 px-2 py-1 rounded-md border border-fuchsia-200">v12.0 Szybkie AI</span></span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <button onClick={() => setShowInstructions(true)} className="flex items-center space-x-2 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl font-bold transition-colors">
@@ -495,16 +468,9 @@
                                                     />
 
                                                     <button onClick={handleGenerateAiImage} disabled={isGenerating} className="w-full bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-md hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center justify-center space-x-2">
-                                                        {isGenerating ? <span>⏳ Tłumaczenie i Rysowanie (Około 15 sek)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
+                                                        {isGenerating ? <span>⏳ Tłumaczenie i Rysowanie (~3 sek)...</span> : <><Icon name="Wand2" size={18}/><span>Generuj Grafikę</span></>}
                                                     </button>
                                                 </div>
-
-                                                {isTakingLong && (
-                                                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold text-center animate-pulse flex flex-col items-center justify-center gap-1 shadow-sm">
-                                                        <span>⏳ Prosimy o cierpliwość...</span>
-                                                        <span className="font-medium text-[10px]">Trwa generowanie obrazu z AI. Przeglądarka lada moment go pobierze!</span>
-                                                    </div>
-                                                )}
                                                 
                                                 {aiError && (
                                                     <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs text-center shadow-sm">
@@ -520,7 +486,7 @@
                                               </div>
                                             )}
                                         </div>
-                                        <p className="text-[10px] text-gray-400 text-center font-medium px-4">Pamiętaj! AI najlepiej radzi sobie z pojedynczymi przedmiotami (np. "Plecak", "Sowa"). Unikaj tłumów i skomplikowanych akcji!</p>
+                                        <p className="text-[10px] text-gray-400 text-center font-medium px-4">Pamiętaj! AI najlepiej radzi sobie z pojedynczymi przedmiotami (np. "Plecak", "Sowa"). System automatycznie usunie tło, by obrazek dopasował się do dyplomu!</p>
                                     </div>
                                 )}
 
