@@ -214,6 +214,7 @@
             const [boxWidth, setBoxWidth] = useState(85); 
             const [boxOpacity, setBoxOpacity] = useState(90); 
             const [boxOffset, setBoxOffset] = useState(0);
+            const [bgImageOpacity, setBgImageOpacity] = useState(100);
             const [garlandLetterSize, setGarlandLetterSize] = useState(180); 
             const [garlandLetterOffset, setGarlandLetterOffset] = useState(50); 
             const [garlandText, setGarlandText] = useState('WITAJCIE');
@@ -304,7 +305,7 @@
 
                 let fullPrompt = "";
                 if (graphicLayout === 'full_background') {
-                    fullPrompt = `A beautiful background illustration of: ${translatedPrompt}. STYLE: ${styleModifier}. ${layoutModifier}. Masterpiece, high quality.`;
+                    fullPrompt = `A beautiful background illustration of: ${translatedPrompt}. STYLE: ${styleModifier}. ${layoutModifier}. CRITICAL INSTRUCTION: Leave the center of the image empty and light-colored so text can be placed there later. Frame the illustration around the edges. Masterpiece, high quality.`;
                 } else {
                     fullPrompt = `MAIN SUBJECT TO DRAW: ${translatedPrompt}. STRICT INSTRUCTION: You must clearly draw exactly the main subject. STYLE: ${styleModifier}. Pure solid white background is mandatory. ${layoutModifier}`;
                 }
@@ -655,6 +656,10 @@
 
                                         <div className={`space-y-5 pt-4 ${previewMode === 'garland' ? 'opacity-30 pointer-events-none' : ''}`}>
                                             <div>
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-300 mb-2 uppercase tracking-wider"><span>Wyrazistość Grafiki AI (Tła)</span><span className="text-sky-400">{bgImageOpacity}%</span></div>
+                                                <input type="range" min="5" max="100" value={bgImageOpacity} onChange={e => setBgImageOpacity(Number(e.target.value))} className="w-full accent-sky-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                            </div>
+                                            <div>
                                                 <div className="flex justify-between text-[10px] font-bold text-slate-300 mb-2 uppercase tracking-wider"><span>Przezroczystość (Górna Szyba)</span><span className="text-sky-400">{titleBoxOpacity}%</span></div>
                                                 <input type="range" min="0" max="100" value={titleBoxOpacity} onChange={e => setTitleBoxOpacity(Number(e.target.value))} className="w-full accent-sky-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
                                             </div>
@@ -707,14 +712,14 @@
                                     {customImage && (
                                         <div className="absolute inset-0 z-10 pointer-events-none">
                                             {graphicLayout === 'full_background' ? (
-                                                <img src={customImage} className="w-full h-full object-cover opacity-100" />
+                                                <img src={customImage} className="w-full h-full object-cover" style={{ opacity: bgImageOpacity / 100 }} />
                                             ) : graphicLayout === 'bottom_corners' ? (
                                                 <>
-                                                    <img src={customImage} className="absolute bottom-[-1rem] left-[-2rem] w-64 h-64 md:w-72 md:h-72 object-contain rotate-6 drop-shadow-2xl" />
-                                                    <img src={customImage} className="absolute bottom-[-1rem] right-[-2rem] w-64 h-64 md:w-72 md:h-72 object-contain -rotate-12 drop-shadow-2xl" />
+                                                    <img src={customImage} className="absolute bottom-[-1rem] left-[-2rem] w-64 h-64 md:w-72 md:h-72 object-contain rotate-6 drop-shadow-2xl" style={{ opacity: bgImageOpacity / 100 }} />
+                                                    <img src={customImage} className="absolute bottom-[-1rem] right-[-2rem] w-64 h-64 md:w-72 md:h-72 object-contain -rotate-12 drop-shadow-2xl" style={{ opacity: bgImageOpacity / 100 }} />
                                                 </>
                                             ) : graphicLayout === 'bottom_center' ? (
-                                                <img src={customImage} className="absolute bottom-[-2rem] left-1/2 -translate-x-1/2 w-72 h-72 md:w-[28rem] md:h-[28rem] object-contain drop-shadow-2xl" />
+                                                <img src={customImage} className="absolute bottom-[-2rem] left-1/2 -translate-x-1/2 w-72 h-72 md:w-[28rem] md:h-[28rem] object-contain drop-shadow-2xl" style={{ opacity: bgImageOpacity / 100 }} />
                                             ) : null}
                                         </div>
                                     )}
@@ -740,14 +745,16 @@
                                                 fontSize: `${textFormats.title.size}px`, 
                                                 color: textFormats.title.color,
                                                 fontWeight: textFormats.title.bold ? 'bold' : 'normal',
-                                                fontStyle: textFormats.title.italic ? 'italic' : 'normal'
+                                                fontStyle: textFormats.title.italic ? 'italic' : 'normal',
+                                                textShadow: '0px 0px 15px rgba(255,255,255,0.9), 0px 0px 5px rgba(255,255,255,0.8)'
                                             }} className="tracking-[0.2em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full block">{diplomaTitle}</h1>
                                             
                                             <h3 style={{ 
                                                 fontSize: `${textFormats.subtitle.size}px`, 
                                                 color: textFormats.subtitle.color,
                                                 fontWeight: textFormats.subtitle.bold ? 'bold' : 'normal',
-                                                fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal'
+                                                fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal',
+                                                textShadow: '0px 0px 10px rgba(255,255,255,0.9)'
                                             }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full block">{diplomaSubtitle}</h3>
                                         </div>
                                     </div>
@@ -768,14 +775,16 @@
                                             fontSize: `${textFormats.name.size}px`, 
                                             color: textFormats.name.color,
                                             fontWeight: textFormats.name.bold ? 'bold' : 'normal',
-                                            fontStyle: textFormats.name.italic ? 'italic' : 'normal'
+                                            fontStyle: textFormats.name.italic ? 'italic' : 'normal',
+                                            textShadow: '0px 0px 15px rgba(255,255,255,0.9), 0px 0px 5px rgba(255,255,255,0.8)'
                                         }} className="border-b-2 border-slate-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
                                         
                                         <p style={{ 
                                             fontSize: `${textFormats.reason.size}px`, 
                                             color: textFormats.reason.color,
                                             fontWeight: textFormats.reason.bold ? 'bold' : 'normal',
-                                            fontStyle: textFormats.reason.italic ? 'italic' : 'normal'
+                                            fontStyle: textFormats.reason.italic ? 'italic' : 'normal',
+                                            textShadow: '0px 0px 10px rgba(255,255,255,0.9)'
                                         }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
                                     </div>
 
