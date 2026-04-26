@@ -228,7 +228,7 @@
             const [selectedThemeId, setSelectedThemeId] = useState('pasowanie');
             const [selectedFont, setSelectedFont] = useState('font-sans');
             
-            const [artStyle, setArtStyle] = useState('watercolor'); 
+            const [artStyle, setArtStyle] = useState('3d'); 
             const [graphicLayout, setGraphicLayout] = useState('bottom_corners'); 
             const [diplomaOrientation, setDiplomaOrientation] = useState('horizontal');
 
@@ -298,7 +298,7 @@
                   case 'vibrant': styleModifier = `vibrant bold colors, high contrast, vivid, colorful cartoon illustration, energetic`; break;
                   case 'pastel': styleModifier = `soft pastel aesthetic, dreamy colors, gentle lighting, cute pinterest style`; break;
                   case 'realistic': styleModifier = `highly detailed, highly realistic, photography style, 8k resolution, cinematic lighting`; break;
-                  case '3d': styleModifier = `cute 3d render, claymation style, soft lighting, smooth 3d illustration`; break;
+                  case '3d': styleModifier = `highly detailed 3D Pixar Disney animation style, cute, vibrant colors, masterpiece, soft cinematic lighting, ultra-polished 3D render`; break;
                   case 'comic': styleModifier = `comic book style, cel shaded, pop art, vibrant flat colors with black outlines`; break;
                   default: styleModifier = `flat vector illustration`;
                 }
@@ -441,7 +441,7 @@
                                       { id: 'doodle', label: '✏️ Doodle' },
                                       { id: 'papercraft', label: '✂️ Papier' },
                                       { id: 'pastel', label: '🌸 Pastele' },
-                                      { id: '3d', label: '🧊 3D' },
+                                      { id: '3d', label: '🎬 Pixar 3D' },
                                       { id: 'realistic', label: '📸 Realizm' },
                                       { id: 'comic', label: '💬 Komiks' }
                                     ].map(style => (
