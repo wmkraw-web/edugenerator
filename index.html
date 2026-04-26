@@ -305,9 +305,9 @@
 
                 let fullPrompt = "";
                 if (graphicLayout === 'full_background') {
-                    fullPrompt = `A beautiful background illustration of: ${translatedPrompt}. STYLE: ${styleModifier}. ${layoutModifier}. CRITICAL INSTRUCTION: Leave the center of the image empty and light-colored so text can be placed there later. Frame the illustration around the edges. Masterpiece, high quality.`;
+                    fullPrompt = `A beautiful background illustration of: ${translatedPrompt}. STYLE: ${styleModifier}. ${layoutModifier}. CRITICAL INSTRUCTION: Leave the center of the image empty and light-colored so text can be placed there later. Frame the illustration around the edges. Masterpiece, high quality, PERFECT human anatomy, correct limbs, no deformities.`;
                 } else {
-                    fullPrompt = `MAIN SUBJECT TO DRAW: ${translatedPrompt}. STRICT INSTRUCTION: You must clearly draw exactly the main subject. STYLE: ${styleModifier}. Pure solid white background is mandatory. ${layoutModifier}`;
+                    fullPrompt = `MAIN SUBJECT TO DRAW: ${translatedPrompt}. STRICT INSTRUCTION: You must clearly draw exactly the main subject. STYLE: ${styleModifier}. Pure solid white background is mandatory. ${layoutModifier}. PERFECT human anatomy, correct limbs, no deformities.`;
                 }
                 
                 try {
@@ -747,7 +747,7 @@
                                                 fontWeight: textFormats.title.bold ? 'bold' : 'normal',
                                                 fontStyle: textFormats.title.italic ? 'italic' : 'normal',
                                                 textShadow: '0px 0px 15px rgba(255,255,255,0.9), 0px 0px 5px rgba(255,255,255,0.8)'
-                                            }} className="tracking-[0.2em] uppercase leading-none drop-shadow-sm select-none break-words max-w-full block">{diplomaTitle}</h1>
+                                            }} className="tracking-[0.2em] uppercase leading-none drop-shadow-sm select-none break-normal max-w-full block">{diplomaTitle}</h1>
                                             
                                             <h3 style={{ 
                                                 fontSize: `${textFormats.subtitle.size}px`, 
@@ -755,7 +755,7 @@
                                                 fontWeight: textFormats.subtitle.bold ? 'bold' : 'normal',
                                                 fontStyle: textFormats.subtitle.italic ? 'italic' : 'normal',
                                                 textShadow: '0px 0px 10px rgba(255,255,255,0.9)'
-                                            }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-words max-w-full block">{diplomaSubtitle}</h3>
+                                            }} className="opacity-80 uppercase tracking-widest min-h-[1.5em] select-none break-normal max-w-full block">{diplomaSubtitle}</h3>
                                         </div>
                                     </div>
 
@@ -777,7 +777,7 @@
                                             fontWeight: textFormats.name.bold ? 'bold' : 'normal',
                                             fontStyle: textFormats.name.italic ? 'italic' : 'normal',
                                             textShadow: '0px 0px 15px rgba(255,255,255,0.9), 0px 0px 5px rgba(255,255,255,0.8)'
-                                        }} className="border-b-2 border-slate-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-words select-none max-w-full">{studentName}</h2>
+                                        }} className="border-b-2 border-slate-300/50 inline-block px-8 md:px-16 pb-2 md:pb-4 mb-4 md:mb-6 leading-tight w-full break-normal select-none max-w-full">{studentName}</h2>
                                         
                                         <p style={{ 
                                             fontSize: `${textFormats.reason.size}px`, 
@@ -785,7 +785,7 @@
                                             fontWeight: textFormats.reason.bold ? 'bold' : 'normal',
                                             fontStyle: textFormats.reason.italic ? 'italic' : 'normal',
                                             textShadow: '0px 0px 10px rgba(255,255,255,0.9)'
-                                        }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-words max-w-full">{diplomaReason}</p>
+                                        }} className="leading-snug md:leading-relaxed max-w-3xl select-none opacity-90 break-normal max-w-full">{diplomaReason}</p>
                                     </div>
 
                                     {/* Stopka Dyplomu */}
